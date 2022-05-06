@@ -1,0 +1,10 @@
+[package]
+name = "sass-embedded-host-rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+prost = "0.10.1"
+
+[build-dependencies]
+prost-build = "0.10.1"
