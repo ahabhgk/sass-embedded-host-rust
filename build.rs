@@ -1,3 +1,10 @@
+use prost_build::Config;
+
 fn main() {
-  prost_build::compile_protos(&["src/embedded_sass.proto"], &["src/"]).unwrap();
+  println!("cargo:rerun-if-changed=build.rs");
+  println!("cargo:rerun-if-changed=embedded_sass.proto");
+  Config::new()
+    .out_dir("src/pb")
+    .compile_protos(&["embedded_sass.proto"], &["."])
+    .unwrap();
 }

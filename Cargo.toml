@@ -5,6 +5,11 @@ edition = "2021"
 
 [dependencies]
 prost = "0.10.1"
+futures = "0.3.21"
+tokio = "1.18.1"
+tokio-stream = "0.1.8"
+tokio-util = { version = "0.7.1", features = ["io"] }
+tokio-process-stream = "0.2.0"
 
 [build-dependencies]
 prost-build = "0.10.1"

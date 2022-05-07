@@ -3,7 +3,7 @@ use std::{
   process::{Command, Stdio},
 };
 
-use crate::{compiler_path, protocol};
+use crate::compiler_path;
 
 pub struct Connection {}
 
