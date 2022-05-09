@@ -6,31 +6,34 @@ use std::{
 use async_trait::async_trait;
 use url::Url;
 
-use crate::pb::sass_embedded_protocol::{OutputStyle, SourceSpan, Syntax};
+pub use crate::{
+  error::Result,
+  pb::{OutputStyle, SourceSpan, Syntax},
+};
 
 /// https://sass-lang.com/documentation/js-api/interfaces/Options
 #[derive(Debug, Default)]
 pub struct Options {
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#alertAscii
-  pub alert_ascii: Option<bool>,
+  pub alert_ascii: bool,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#alertColor
   pub alert_color: Option<bool>,
   // /// https://sass-lang.com/documentation/js-api/interfaces/Options#functions
   // pub functions
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#importers
-  pub importers: Option<Vec<ScssImporter>>,
+  pub importers: Option<Vec<SassImporter>>,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#loadPaths
   pub load_paths: Option<Vec<String>>,
   // /// https://sass-lang.com/documentation/js-api/interfaces/Options#logger
   // pub logger
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#quietDeps
-  pub quiet_deps: Option<bool>,
+  pub quiet_deps: bool,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#sourceMap
-  pub source_map: Option<bool>,
+  pub source_map: bool,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#sourceMapIncludeSources
-  pub source_map_include_sources: Option<bool>,
+  pub source_map_include_sources: bool,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#style
-  pub style: Option<OutputStyle>,
+  pub style: OutputStyle,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#verbose
   pub verbose: Option<bool>,
 }
@@ -38,8 +41,17 @@ pub struct Options {
 /// https://sass-lang.com/documentation/js-api/modules#StringOptions
 #[derive(Debug)]
 pub enum StringOptions {
-  StringOptionsWithImporter(StringOptionsWithImporter),
-  StringOptionsWithoutImporter(StringOptionsWithoutImporter),
+  WithImporter(StringOptionsWithImporter),
+  WithoutImporter(StringOptionsWithoutImporter),
+}
+
+impl StringOptions {
+  pub fn get_options_mut(&mut self) -> &mut Options {
+    match self {
+      StringOptions::WithImporter(o) => &mut o.base.base,
+      StringOptions::WithoutImporter(o) => &mut o.base,
+    }
+  }
 }
 
 /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter
@@ -48,7 +60,7 @@ pub struct StringOptionsWithoutImporter {
   /// extends [Options]
   pub base: Options,
   /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#syntax
-  pub syntax: Option<Syntax>,
+  pub syntax: Syntax,
   /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#url
   pub url: Option<Url>,
 }
@@ -58,14 +70,14 @@ pub struct StringOptionsWithoutImporter {
 pub struct StringOptionsWithImporter {
   /// extends [StringOptionsWithoutImporter]
   pub base: StringOptionsWithoutImporter,
-  // /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#importer
-  // pub importer
+  /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#importer
+  pub importer: SassImporter,
   /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#url
   pub url: Url,
 }
 
 #[derive(Debug)]
-pub enum ScssImporter {
+pub enum SassImporter {
   Importer(Box<dyn Importer>),
   FileImporter(Box<dyn FileImporter>),
 }
@@ -78,13 +90,13 @@ pub trait Importer: Debug {
     &mut self,
     url: &str,
     options: &ImporterOptions,
-  ) -> Result<Option<Url>, Exception>;
+  ) -> Result<Option<Url>>;
 
   /// https://sass-lang.com/documentation/js-api/interfaces/Importer#load
   async fn load(
     &mut self,
     canonicalUrl: &Url,
-  ) -> Result<Option<ImporterResult>, Exception>;
+  ) -> Result<Option<ImporterResult>>;
 }
 
 pub struct ImporterOptions {
@@ -99,10 +111,11 @@ pub trait FileImporter: Debug {
     &mut self,
     url: &str,
     options: &ImporterOptions,
-  ) -> Result<Option<Url>, Exception>;
+  ) -> Result<Option<Url>>;
 }
 
 /// https://sass-lang.com/documentation/js-api/classes/Exception
+#[derive(Debug)]
 pub struct Exception {
   /// https://sass-lang.com/documentation/js-api/classes/Exception#message
   pub message: String,
@@ -133,6 +146,8 @@ impl Exception {
   }
 }
 
+impl std::error::Error for Exception {}
+
 impl Display for Exception {
   /// https://sass-lang.com/documentation/js-api/classes/Exception#toString
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -148,4 +163,14 @@ pub struct ImporterResult {
   pub source_map_url: Option<String>,
   /// https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#syntax
   pub syntax: Syntax,
+}
+
+/// https://sass-lang.com/documentation/js-api/interfaces/CompileResult
+pub struct CompileResult {
+  /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#css
+  css: String,
+  /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#loadedUrls
+  loaded_urls: Vec<String>,
+  /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#sourceMap
+  source_map: Option<String>,
 }

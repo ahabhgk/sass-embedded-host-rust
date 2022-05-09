@@ -3,7 +3,7 @@
 //   todo!()
 // }
 
-use crate::pb::sass_embedded_protocol::{
+use crate::pb::{
   inbound_message::{CompileRequest, Message},
   InboundMessage,
 };

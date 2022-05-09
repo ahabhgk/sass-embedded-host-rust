@@ -10,14 +10,15 @@ use tokio::{
   io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
   process::Command,
 };
-use tokio_process_stream::ProcessChunkStream;
 // use tokio_stream::StreamExt as _;
 use tokio_util::io::ReaderStream;
 
 use crate::{
+  api::{CompileResult, Result, StringOptions},
   compiler_path,
+  importer_registry::ImporterRegistry,
   packet_transformer::PacketTransformer,
-  pb::sass_embedded_protocol::{
+  pb::{
     inbound_message::{
       compile_request::{Input, StringInput},
       CompileRequest, Message,
@@ -26,52 +27,62 @@ use crate::{
   },
 };
 
-#[tokio::test]
-pub async fn compile_string() {
-  let source = ".a { color: red; }".to_string();
-  let mut string = StringInput::default();
-  string.source = source;
-  string.set_syntax(Syntax::Scss);
-  let mut request = CompileRequest::default();
-  request.set_style(OutputStyle::Expanded);
-  request.input = Some(Input::String(string));
-  // request.id = 0;
-  let mut inbound_message = InboundMessage::default();
-  inbound_message.message = Some(Message::CompileRequest(request));
-  let buf = inbound_message.encode_length_delimited_to_vec();
-  // let buf = PacketTransformer::encode(buf);
-
-  let path = compiler_path::compiler_path().unwrap();
-  let mut child = Command::new(path)
-    .stdin(Stdio::piped())
-    .stdout(Stdio::piped())
-    .stderr(Stdio::piped())
-    .spawn()
-    .unwrap();
-  dbg!(&buf);
-  child
-    .stdin
-    .as_mut()
-    .unwrap()
-    .write_all(buf.as_ref())
-    .await
-    .unwrap();
-  let stdout = child.stdout.take().unwrap();
-  let reader = BufReader::new(stdout);
-  let stream = ReaderStream::new(reader);
-  stream
-    // .flat_map(|buf| {
-    //   let ps = pt.decode(buf.unwrap().to_vec());
-    //   stream::iter(ps)
-    // })
-    .map(|buf| {
-      let buf = buf.unwrap().to_vec();
-      let m = OutboundMessage::decode_length_delimited(buf.as_ref()).unwrap();
-      m
-    })
-    .for_each(|m| {
-      dbg!(m);
-      future::ready(())
-    })
-    .await;
+pub async fn compile_string(
+  source: &str,
+  mut options: StringOptions,
+) -> Result<CompileResult> {
+  let base = options.get_options_mut();
+  let importers =
+    ImporterRegistry::new(base.importers.take(), base.load_paths.take());
+  todo!()
 }
+
+// #[tokio::test]
+// pub async fn compile_string() {
+//   let source = ".a { color: red; }".to_string();
+//   let mut string = StringInput::default();
+//   string.source = source;
+//   string.set_syntax(Syntax::Scss);
+//   let mut request = CompileRequest::default();
+//   request.set_style(OutputStyle::Expanded);
+//   request.input = Some(Input::String(string));
+//   // request.id = 0;
+//   let mut inbound_message = InboundMessage::default();
+//   inbound_message.message = Some(Message::CompileRequest(request));
+//   let buf = inbound_message.encode_length_delimited_to_vec();
+//   // let buf = PacketTransformer::encode(buf);
+
+//   let path = compiler_path::compiler_path().unwrap();
+//   let mut child = Command::new(path)
+//     .stdin(Stdio::piped())
+//     .stdout(Stdio::piped())
+//     .stderr(Stdio::piped())
+//     .spawn()
+//     .unwrap();
+//   dbg!(&buf);
+//   child
+//     .stdin
+//     .as_mut()
+//     .unwrap()
+//     .write_all(buf.as_ref())
+//     .await
+//     .unwrap();
+//   let stdout = child.stdout.take().unwrap();
+//   let reader = BufReader::new(stdout);
+//   let stream = ReaderStream::new(reader);
+//   stream
+//     // .flat_map(|buf| {
+//     //   let ps = pt.decode(buf.unwrap().to_vec());
+//     //   stream::iter(ps)
+//     // })
+//     .map(|buf| {
+//       let buf = buf.unwrap().to_vec();
+//       let m = OutboundMessage::decode_length_delimited(buf.as_ref()).unwrap();
+//       m
+//     })
+//     .for_each(|m| {
+//       dbg!(m);
+//       future::ready(())
+//     })
+//     .await;
+// }
