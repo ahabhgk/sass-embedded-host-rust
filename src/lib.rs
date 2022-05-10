@@ -7,5 +7,6 @@ mod importer_registry;
 mod message_transformer;
 mod packet_transformer;
 mod pb;
+mod request_tracker;
 
 pub use error::{Error, Result};

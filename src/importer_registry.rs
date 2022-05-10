@@ -6,7 +6,6 @@ use crate::{
   api::{FileImporter, Importer, ImporterOptions, Result, SassImporter},
   error::Error,
   pb::{
-    self,
     inbound_message::{
       canonicalize_response, compile_request, file_import_response,
       import_response, CanonicalizeResponse, FileImportResponse,
@@ -20,7 +19,7 @@ use crate::{
 /// compiler.
 pub struct ImporterRegistry {
   /// Protocol buffer representations of the registered importers.
-  importers: Vec<pb::inbound_message::compile_request::Importer>,
+  importers: Vec<compile_request::Importer>,
   /// The next ID to use for an importer.
   id: u32,
   /// A map from importer IDs to their corresponding importers.
@@ -40,15 +39,14 @@ impl ImporterRegistry {
       importers_by_id: HashMap::new(),
       file_importers_by_id: HashMap::new(),
     };
-    let mut importers: Vec<pb::inbound_message::compile_request::Importer> =
-      importers
-        .unwrap_or_default()
-        .into_iter()
-        .map(|importer| this.register(importer))
-        .collect();
+    let mut importers: Vec<compile_request::Importer> = importers
+      .unwrap_or_default()
+      .into_iter()
+      .map(|importer| this.register(importer))
+      .collect();
     importers.extend(load_paths.unwrap_or_default().into_iter().map(|p| {
-      let i = pb::inbound_message::compile_request::importer::Importer::Path(p);
-      pb::inbound_message::compile_request::Importer::new(i)
+      let i = compile_request::importer::Importer::Path(p);
+      compile_request::Importer::new(i)
     }));
     this.importers = importers;
     this
