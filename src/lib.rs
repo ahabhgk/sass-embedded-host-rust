@@ -8,5 +8,6 @@ mod message_transformer;
 mod packet_transformer;
 mod pb;
 mod request_tracker;
+mod connection;
 
 pub use error::{Error, Result};

@@ -1,5 +1,3 @@
-use std::{error::Error as StdError, fmt::Display};
-
 use crate::api::Exception;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -11,11 +9,12 @@ pub enum Error {
   Host(String),
   Value(String),
   SassException(Exception),
+  IO(std::io::Error),
 }
 
-impl StdError for Error {}
+impl std::error::Error for Error {}
 
-impl Display for Error {
+impl std::fmt::Display for Error {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
       Error::Compile(m) => write!(f, "Compiler caused error: {}", m),
@@ -23,6 +22,13 @@ impl Display for Error {
       Error::Host(m) => write!(f, "Compiler reported error: {}", m),
       Error::Value(m) => write!(f, "{}", m),
       Error::SassException(e) => write!(f, "{}", e),
+      Error::IO(e) => write!(f, "{}", e),
     }
+  }
+}
+
+impl From<std::io::Error> for Error {
+  fn from(e: std::io::Error) -> Self {
+    Error::IO(e)
   }
 }

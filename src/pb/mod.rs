@@ -59,3 +59,9 @@ impl compile_request::Importer {
     Self { importer: Some(i) }
   }
 }
+
+impl InboundMessage {
+  pub fn new(m: inbound_message::Message) -> Self {
+    Self { message: Some(m) }
+  }
+}

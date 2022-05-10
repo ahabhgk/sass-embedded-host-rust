@@ -8,10 +8,13 @@ prost = "0.10"
 url = "2"
 async-trait = "0.1"
 futures = "0.3"
-tokio = { version = "1", features = ["io-util", "process"] }
+tokio = { version = "1", features = ["io-util", "process", "macros"] }
 tokio-stream = "0.1"
 tokio-util = { version = "0.7", features = ["io"] }
 supports-color = "1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["io-util", "process", "macros", "rt"] }
 
 [build-dependencies]
 prost-build = "0.10"
