@@ -17,7 +17,7 @@ use crate::{
     InboundMessage, OutboundMessage,
   },
   request_tracker::RequestTracker,
-  Result,
+  Error, Result,
 };
 
 pub struct Embedded {
@@ -29,9 +29,11 @@ pub struct Embedded {
 }
 
 impl Embedded {
-  pub fn new(program: impl AsRef<OsStr>) -> Self {
+  pub fn new(
+    program: impl AsRef<OsStr>,
+    importers: &mut ImporterRegistry,
+  ) -> Self {
     let mut child = Command::new(program)
-      .kill_on_drop(true)
       .stdin(Stdio::piped())
       .stdout(Stdio::piped())
       .stderr(Stdio::piped())
@@ -48,13 +50,14 @@ impl Embedded {
       pending_outbound_requests: RequestTracker::new(),
     };
 
-    reader
+    let reader = reader
+      .map_err(|e| Error::from(e))
       .and_then(|buf| {
         let outbound = OutboundMessage::decode_length_delimited(buf).unwrap();
         future::ok(outbound.message.unwrap())
       })
-      .try_filter_map(|message| {
-        future::ok(this.handle_outbound_message(message))
+      .try_filter_map(|message| async move {
+        this.handle_outbound_message(message, importers).await
       });
 
     this
@@ -64,22 +67,13 @@ impl Embedded {
     self.stdin.write(buf).await.map_err(|e| e.into())
   }
 
-  fn reader(&self) -> &ReaderStream<BufReader<ChildStdout>> {
-    &self.reader
-  }
-
-  pub async fn compile_string(
+  pub async fn send_compile_request(
     &mut self,
-    source: String,
-    mut options: StringOptions,
+    request: CompileRequest,
   ) -> Result<CompileResult> {
-    let base = options.get_options_mut();
-    let mut importers =
-      ImporterRegistry::new(base.importers.take(), base.load_paths.take());
-    let request = CompileRequest::with_string(source, &mut importers, options);
     let id = self.pending_inbound_requests.next_id();
     self
-      .send_inbound_message(
+      .handle_inbound_message(
         id,
         inbound_message::Message::CompileRequest(request),
       )
@@ -87,7 +81,7 @@ impl Embedded {
     Ok(())
   }
 
-  async fn send_inbound_message(
+  async fn handle_inbound_message(
     &mut self,
     id: u32,
     mut message: inbound_message::Message,
@@ -121,37 +115,56 @@ impl Embedded {
     Ok(())
   }
 
-  fn handle_outbound_message(
+  async fn handle_outbound_message(
     &mut self,
     message: outbound_message::Message,
-  ) -> Option<CompileResponse> {
+    importers: &mut ImporterRegistry,
+  ) -> Result<Option<CompileResponse>> {
     match message {
       outbound_message::Message::CompileResponse(response) => {
         self.pending_inbound_requests.resolve(response.id);
-        Some(response)
+        Ok(Some(response))
       }
-      outbound_message::Message::Error(_) => todo!(),
-      outbound_message::Message::LogEvent(_) => todo!(),
       outbound_message::Message::CanonicalizeRequest(request) => {
         self.pending_outbound_requests.add(request.id);
-        // TODO
-        None
+        let response = importers.canonicalize(&request).await?;
+        self
+          .handle_inbound_message(
+            request.id,
+            inbound_message::Message::CanonicalizeResponse(response),
+          )
+          .await?;
+        Ok(None)
       }
       outbound_message::Message::ImportRequest(request) => {
         self.pending_outbound_requests.add(request.id);
-        // TODO
-        None
+        let response = importers.import(&request).await?;
+        self
+          .handle_inbound_message(
+            request.id,
+            inbound_message::Message::ImportResponse(response),
+          )
+          .await?;
+        Ok(None)
       }
       outbound_message::Message::FileImportRequest(request) => {
         self.pending_outbound_requests.add(request.id);
-        // TODO
-        None
+        let response = importers.file_import(&request).await?;
+        self
+          .handle_inbound_message(
+            request.id,
+            inbound_message::Message::FileImportResponse(response),
+          )
+          .await?;
+        Ok(None)
       }
       outbound_message::Message::FunctionCallRequest(request) => {
         self.pending_outbound_requests.add(request.id);
         // TODO
-        None
+        Ok(None)
       }
+      outbound_message::Message::Error(_) => todo!(),
+      outbound_message::Message::LogEvent(_) => todo!(),
       outbound_message::Message::VersionResponse(_) => todo!(),
     }
   }

@@ -81,7 +81,7 @@ impl ImporterRegistry {
   /// Handles a canonicalization request.
   pub async fn canonicalize(
     &mut self,
-    request: CanonicalizeRequest,
+    request: &CanonicalizeRequest,
   ) -> Result<CanonicalizeResponse> {
     let importer = self
       .importers_by_id
@@ -118,7 +118,7 @@ impl ImporterRegistry {
   /// Handles an import request.
   pub async fn import(
     &mut self,
-    request: ImportRequest,
+    request: &ImportRequest,
   ) -> Result<ImportResponse> {
     let importer = self
       .importers_by_id
@@ -151,7 +151,7 @@ impl ImporterRegistry {
   /// Handles a file import request.
   pub async fn file_import(
     &mut self,
-    request: FileImportRequest,
+    request: &FileImportRequest,
   ) -> Result<FileImportResponse> {
     let importer = self
       .file_importers_by_id

@@ -4,7 +4,10 @@ use std::{
   thread,
 };
 
-use futures::{future::{self, BoxFuture}, stream, Stream, StreamExt};
+use futures::{
+  future::{self, BoxFuture},
+  stream, Stream, StreamExt,
+};
 use prost::Message as _;
 use tokio::{
   io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
@@ -15,6 +18,7 @@ use tokio_util::io::ReaderStream;
 
 use crate::{
   api::{CompileResult, Result, StringOptions},
+  compiler::Embedded,
   compiler_path,
   importer_registry::ImporterRegistry,
   packet_transformer::PacketTransformer,
@@ -35,7 +39,10 @@ pub async fn compile_string(
   let mut importers =
     ImporterRegistry::new(base.importers.take(), base.load_paths.take());
   let request = CompileRequest::with_string(source, &mut importers, options);
-  todo!()
+  let embedded =
+    Embedded::new(compiler_path::compiler_path().unwrap(), &mut importers);
+  embedded.send_compile_request(request);
+  Ok(())
 }
 
 #[tokio::test]
