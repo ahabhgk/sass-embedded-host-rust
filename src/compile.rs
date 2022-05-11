@@ -17,7 +17,10 @@ use tokio::{
 use tokio_util::io::ReaderStream;
 
 use crate::{
-  api::{CompileResult, Result, StringOptions},
+  api::{
+    CompileResult, Exception, Result, StringOptions,
+    StringOptionsWithoutImporter,
+  },
   compiler::Embedded,
   compiler_path,
   importer_registry::ImporterRegistry,
@@ -26,6 +29,10 @@ use crate::{
     inbound_message::{
       compile_request::{Input, StringInput},
       CompileRequest, Message,
+    },
+    outbound_message::{
+      compile_response::{self, CompileSuccess},
+      CompileResponse,
     },
     InboundMessage, OutboundMessage, OutputStyle, Syntax,
   },
@@ -39,14 +46,38 @@ pub async fn compile_string(
   let mut importers =
     ImporterRegistry::new(base.importers.take(), base.load_paths.take());
   let request = CompileRequest::with_string(source, &mut importers, options);
-  let embedded =
-    Embedded::new(compiler_path::compiler_path().unwrap(), &mut importers);
-  embedded.send_compile_request(request);
-  Ok(())
+  let mut embedded = Embedded::new(compiler_path::compiler_path().unwrap());
+  let response = embedded.send_compile_request(request, importers).await?;
+  match response.result.unwrap() {
+    compile_response::Result::Success(success) => {
+      let css = success.css;
+      let source_map = success.source_map;
+      let loaded_urls = success.loaded_urls;
+      Ok(CompileResult {
+        css,
+        source_map: Some(source_map),
+        loaded_urls,
+      })
+    }
+    compile_response::Result::Failure(failure) => {
+      Err(Exception::new(failure).into())
+    }
+  }
 }
 
 #[tokio::test]
-pub async fn t_compile_string() {
+async fn test_compile_string() {
+  let res = compile_string(
+    ".foo {a: b}".to_string(),
+    StringOptions::WithoutImporter(StringOptionsWithoutImporter::default()),
+  )
+  .await
+  .unwrap();
+  dbg!(res);
+}
+
+#[tokio::test]
+async fn t_compile_string() {
   let source = ".a { color: red; }".to_string();
   let mut string = StringInput::default();
   string.source = source;

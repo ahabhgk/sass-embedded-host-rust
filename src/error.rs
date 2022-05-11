@@ -32,3 +32,9 @@ impl From<std::io::Error> for Error {
     Error::IO(e)
   }
 }
+
+impl From<Exception> for Error {
+  fn from(e: Exception) -> Self {
+    Error::SassException(e)
+  }
+}

@@ -80,15 +80,16 @@ impl ImporterRegistry {
 
   /// Handles a canonicalization request.
   pub async fn canonicalize(
-    &mut self,
+    &self,
     request: &CanonicalizeRequest,
   ) -> Result<CanonicalizeResponse> {
-    let importer = self
-      .importers_by_id
-      .get_mut(&request.importer_id)
-      .ok_or_else(|| {
-        Error::Compile("Unknown CanonicalizeRequest.importer_id".to_string())
-      })?;
+    let importer =
+      self
+        .importers_by_id
+        .get(&request.importer_id)
+        .ok_or_else(|| {
+          Error::Compile("Unknown CanonicalizeRequest.importer_id".to_string())
+        })?;
     match importer
       .canonicalize(
         &request.url,
@@ -117,15 +118,16 @@ impl ImporterRegistry {
 
   /// Handles an import request.
   pub async fn import(
-    &mut self,
+    &self,
     request: &ImportRequest,
   ) -> Result<ImportResponse> {
-    let importer = self
-      .importers_by_id
-      .get_mut(&request.importer_id)
-      .ok_or_else(|| {
-        Error::Compile("Unknown ImportRequest.importer_id".to_string())
-      })?;
+    let importer =
+      self
+        .importers_by_id
+        .get(&request.importer_id)
+        .ok_or_else(|| {
+          Error::Compile("Unknown ImportRequest.importer_id".to_string())
+        })?;
     match importer.load(&Url::parse(&request.url).unwrap()).await {
       Ok(result) => {
         let mut proto = ImportResponse::default();
@@ -150,12 +152,12 @@ impl ImporterRegistry {
 
   /// Handles a file import request.
   pub async fn file_import(
-    &mut self,
+    &self,
     request: &FileImportRequest,
   ) -> Result<FileImportResponse> {
     let importer = self
       .file_importers_by_id
-      .get_mut(&request.importer_id)
+      .get(&request.importer_id)
       .ok_or_else(|| {
         Error::Compile("Unknown FileImportRequest.importer_id".to_string())
       })?;

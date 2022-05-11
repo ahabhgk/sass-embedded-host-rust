@@ -1,14 +1,14 @@
-use std::{
-  collections::HashMap,
-  fmt::{Debug, Display},
-};
+use std::fmt::{Debug, Display};
 
 use async_trait::async_trait;
 use url::Url;
 
 pub use crate::{
   error::Result,
-  pb::{OutputStyle, SourceSpan, Syntax},
+  pb::{
+    outbound_message::compile_response::CompileFailure, OutputStyle,
+    SourceSpan, Syntax,
+  },
 };
 
 /// https://sass-lang.com/documentation/js-api/interfaces/Options
@@ -55,7 +55,7 @@ impl StringOptions {
 }
 
 /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct StringOptionsWithoutImporter {
   /// extends [Options]
   pub base: Options,
@@ -87,16 +87,13 @@ pub enum SassImporter {
 pub trait Importer: Debug {
   /// https://sass-lang.com/documentation/js-api/interfaces/Importer#canonicalize
   async fn canonicalize(
-    &mut self,
+    &self,
     url: &str,
     options: &ImporterOptions,
   ) -> Result<Option<Url>>;
 
   /// https://sass-lang.com/documentation/js-api/interfaces/Importer#load
-  async fn load(
-    &mut self,
-    canonicalUrl: &Url,
-  ) -> Result<Option<ImporterResult>>;
+  async fn load(&self, canonicalUrl: &Url) -> Result<Option<ImporterResult>>;
 }
 
 pub struct ImporterOptions {
@@ -108,7 +105,7 @@ pub struct ImporterOptions {
 pub trait FileImporter: Debug {
   /// https://sass-lang.com/documentation/js-api/interfaces/FileImporter#findFileUrl
   async fn find_file_url(
-    &mut self,
+    &self,
     url: &str,
     options: &ImporterOptions,
   ) -> Result<Option<Url>>;
@@ -126,13 +123,23 @@ pub struct Exception {
   /// https://sass-lang.com/documentation/js-api/classes/Exception#sassStack
   sass_stack: String,
   /// https://sass-lang.com/documentation/js-api/classes/Exception#span
-  span: SourceSpan,
-  /// https://sass-lang.com/documentation/js-api/classes/Exception#stack
-  pub stack: Option<String>,
+  span: Option<SourceSpan>,
+  // /// https://sass-lang.com/documentation/js-api/classes/Exception#stack
+  // pub stack: Option<String>,
   // TODO: prepareStackTrace, stackTraceLimit, captureStackTrace
 }
 
 impl Exception {
+  pub fn new(failure: CompileFailure) -> Self {
+    Self {
+      message: failure.formatted,
+      name: "Error".to_string(),
+      sass_message: failure.message,
+      sass_stack: failure.stack_trace,
+      span: failure.span,
+    }
+  }
+
   pub fn sass_message(&self) -> &str {
     &self.sass_message
   }
@@ -141,7 +148,7 @@ impl Exception {
     &self.sass_stack
   }
 
-  pub fn span(&self) -> &SourceSpan {
+  pub fn span(&self) -> &Option<SourceSpan> {
     &self.span
   }
 }
@@ -166,11 +173,12 @@ pub struct ImporterResult {
 }
 
 /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult
+#[derive(Debug)]
 pub struct CompileResult {
   /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#css
-  css: String,
+  pub css: String,
   /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#loadedUrls
-  loaded_urls: Vec<String>,
+  pub loaded_urls: Vec<String>,
   /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#sourceMap
-  source_map: Option<String>,
+  pub source_map: Option<String>,
 }
