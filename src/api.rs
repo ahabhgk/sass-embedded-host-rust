@@ -6,8 +6,8 @@ use url::Url;
 pub use crate::{
   error::Result,
   pb::{
-    outbound_message::compile_response::CompileFailure, OutputStyle,
-    SourceSpan, Syntax,
+    outbound_message::compile_response::{CompileFailure, CompileSuccess},
+    OutputStyle, SourceSpan, Syntax,
   },
 };
 
@@ -39,26 +39,14 @@ pub struct Options {
 }
 
 /// https://sass-lang.com/documentation/js-api/modules#StringOptions
-#[derive(Debug)]
 pub enum StringOptions {
-  WithImporter(StringOptionsWithImporter),
-  WithoutImporter(StringOptionsWithoutImporter),
-}
-
-impl StringOptions {
-  pub fn get_options_mut(&mut self) -> &mut Options {
-    match self {
-      StringOptions::WithImporter(o) => &mut o.base.base,
-      StringOptions::WithoutImporter(o) => &mut o.base,
-    }
-  }
+  WithoutImporter(WithoutImporter),
+  WithImporter(WithImporter),
 }
 
 /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter
 #[derive(Debug, Default)]
-pub struct StringOptionsWithoutImporter {
-  /// extends [Options]
-  pub base: Options,
+pub struct WithoutImporter {
   /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#syntax
   pub syntax: Syntax,
   /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#url
@@ -67,11 +55,11 @@ pub struct StringOptionsWithoutImporter {
 
 /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter
 #[derive(Debug)]
-pub struct StringOptionsWithImporter {
-  /// extends [StringOptionsWithoutImporter]
-  pub base: StringOptionsWithoutImporter,
+pub struct WithImporter {
   /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#importer
   pub importer: SassImporter,
+  /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#syntax
+  pub syntax: Syntax,
   /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#url
   pub url: Url,
 }
@@ -93,7 +81,7 @@ pub trait Importer: Debug {
   ) -> Result<Option<Url>>;
 
   /// https://sass-lang.com/documentation/js-api/interfaces/Importer#load
-  async fn load(&self, canonicalUrl: &Url) -> Result<Option<ImporterResult>>;
+  async fn load(&self, canonical_url: &Url) -> Result<Option<ImporterResult>>;
 }
 
 pub struct ImporterOptions {
@@ -162,6 +150,12 @@ impl Display for Exception {
   }
 }
 
+impl From<CompileFailure> for Exception {
+  fn from(failure: CompileFailure) -> Self {
+    Self::new(failure)
+  }
+}
+
 /// https://sass-lang.com/documentation/js-api/interfaces/ImporterResult
 pub struct ImporterResult {
   /// https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#contents
@@ -181,6 +175,20 @@ pub struct CompileResult {
   pub loaded_urls: Vec<String>,
   /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#sourceMap
   pub source_map: Option<String>,
+}
+
+impl From<CompileSuccess> for CompileResult {
+  fn from(s: CompileSuccess) -> Self {
+    Self {
+      css: s.css,
+      loaded_urls: s.loaded_urls,
+      source_map: if s.source_map.is_empty() {
+        None
+      } else {
+        Some(s.source_map)
+      },
+    }
+  }
 }
 
 pub type SassLogger = Box<dyn Logger>;

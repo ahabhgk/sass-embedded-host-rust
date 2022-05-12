@@ -15,19 +15,19 @@ use crate::{
   Error, Result,
 };
 
-pub struct Dispatcher {
-  importers: ImporterRegistry,
-  logger: LoggerRegistry,
+pub struct Dispatcher<'i, 'l> {
+  importers: &'i ImporterRegistry,
+  logger: &'l LoggerRegistry,
   stdin: Mutex<ChildStdin>,
   pending_inbound_requests: RequestTracker,
   pending_outbound_requests: RequestTracker,
 }
 
-impl Dispatcher {
+impl<'i, 'l> Dispatcher<'i, 'l> {
   pub fn new(
     stdin: ChildStdin,
-    importers: ImporterRegistry,
-    logger: LoggerRegistry,
+    importers: &'i ImporterRegistry,
+    logger: &'l LoggerRegistry,
   ) -> Self {
     Self {
       importers,

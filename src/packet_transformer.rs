@@ -1,3 +1,5 @@
+use prost::Message;
+
 #[derive(Debug, Default)]
 pub struct PacketTransformer {
   packet: Packet,

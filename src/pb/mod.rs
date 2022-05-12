@@ -5,9 +5,7 @@ use crate::{
 
 pub use sass_embedded_protocol::*;
 
-use self::inbound_message::{
-  canonicalize_response, compile_request, CompileRequest,
-};
+use self::inbound_message::{compile_request, CompileRequest};
 
 mod sass_embedded_protocol;
 
@@ -27,28 +25,38 @@ impl CompileRequest {
     request
   }
 
+  pub fn with_path(
+    path: String,
+    importers: &ImporterRegistry,
+    options: &Options,
+  ) -> Self {
+    let mut request = Self::new(importers, options);
+    request.input = Some(compile_request::Input::Path(path));
+    request
+  }
+
   pub fn with_string(
     source: String,
     importers: &mut ImporterRegistry,
-    options: StringOptions,
+    options: &Options,
+    string_options: StringOptions,
   ) -> Self {
     let mut input = compile_request::StringInput::default();
     input.source = source;
-    let base = match options {
+    match string_options {
       StringOptions::WithImporter(o) => {
+        input.set_syntax(o.syntax);
         input.url = o.url.to_string();
         input.importer = Some(importers.register(o.importer));
-        o.base.base
       }
       StringOptions::WithoutImporter(o) => {
         input.set_syntax(o.syntax);
         if let Some(url) = o.url {
           input.url = url.to_string();
         }
-        o.base
       }
     };
-    let mut request = CompileRequest::new(importers, &base);
+    let mut request = CompileRequest::new(importers, &options);
     request.input = Some(compile_request::Input::String(input));
     request
   }
