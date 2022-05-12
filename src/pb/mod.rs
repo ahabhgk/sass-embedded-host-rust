@@ -12,7 +12,7 @@ use self::inbound_message::{
 mod sass_embedded_protocol;
 
 impl CompileRequest {
-  fn new(importers: &ImporterRegistry, options: Options) -> Self {
+  fn new(importers: &ImporterRegistry, options: &Options) -> Self {
     let mut request = CompileRequest::default();
     request.importers = importers.importers();
     request.global_functions = Vec::new(); // TODO
@@ -48,7 +48,7 @@ impl CompileRequest {
         o.base
       }
     };
-    let mut request = CompileRequest::new(importers, base);
+    let mut request = CompileRequest::new(importers, &base);
     request.input = Some(compile_request::Input::String(input));
     request
   }

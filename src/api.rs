@@ -24,8 +24,8 @@ pub struct Options {
   pub importers: Option<Vec<SassImporter>>,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#loadPaths
   pub load_paths: Option<Vec<String>>,
-  // /// https://sass-lang.com/documentation/js-api/interfaces/Options#logger
-  // pub logger
+  /// https://sass-lang.com/documentation/js-api/interfaces/Options#logger
+  pub logger: Option<SassLogger>,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#quietDeps
   pub quiet_deps: bool,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#sourceMap
@@ -181,4 +181,25 @@ pub struct CompileResult {
   pub loaded_urls: Vec<String>,
   /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#sourceMap
   pub source_map: Option<String>,
+}
+
+pub type SassLogger = Box<dyn Logger>;
+
+/// https://sass-lang.com/documentation/js-api/interfaces/Logger
+pub trait Logger: Debug {
+  /// https://sass-lang.com/documentation/js-api/interfaces/Logger#warn
+  fn warn(&self, message: &str, options: &LoggerWarnOptions);
+
+  /// https://sass-lang.com/documentation/js-api/interfaces/Logger#debug
+  fn debug(&self, message: &str, options: &LoggerDebugOptions);
+}
+
+pub struct LoggerWarnOptions {
+  pub deprecation: bool,
+  pub span: Option<SourceSpan>,
+  pub stack: Option<String>,
+}
+
+pub struct LoggerDebugOptions {
+  pub span: Option<SourceSpan>,
 }
