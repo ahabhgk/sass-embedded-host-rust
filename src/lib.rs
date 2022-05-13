@@ -11,8 +11,12 @@ mod pb;
 mod request_tracker;
 
 use api::Logger;
-pub use api::Options;
+pub use api::{
+  FileImporter, Importer, ImporterOptions, ImporterResult, Options,
+  SassImporter, SassLogger, StringOptions, WithImporter, WithoutImporter,
+};
 pub use compile::{compile, compile_string};
+pub use compile::{compile_string_sync, compile_sync};
 pub use error::{Error, Result};
 
 #[derive(Debug, Default, Clone)]

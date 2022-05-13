@@ -36,6 +36,9 @@ pub struct Options {
   pub style: OutputStyle,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#verbose
   pub verbose: Option<bool>,
+
+  // TODO: find a better way??
+  pub exe_path: Option<String>,
 }
 
 /// https://sass-lang.com/documentation/js-api/modules#StringOptions
@@ -74,14 +77,17 @@ pub enum SassImporter {
 #[async_trait]
 pub trait Importer: Debug {
   /// https://sass-lang.com/documentation/js-api/interfaces/Importer#canonicalize
-  async fn canonicalize(
+  async fn canonicalize<'u, 'o>(
     &self,
-    url: &str,
-    options: &ImporterOptions,
+    url: &'u str,
+    options: &'o ImporterOptions,
   ) -> Result<Option<Url>>;
 
   /// https://sass-lang.com/documentation/js-api/interfaces/Importer#load
-  async fn load(&self, canonical_url: &Url) -> Result<Option<ImporterResult>>;
+  async fn load<'u>(
+    &self,
+    canonical_url: &'u Url,
+  ) -> Result<Option<ImporterResult>>;
 }
 
 pub struct ImporterOptions {
@@ -92,10 +98,10 @@ pub struct ImporterOptions {
 #[async_trait]
 pub trait FileImporter: Debug {
   /// https://sass-lang.com/documentation/js-api/interfaces/FileImporter#findFileUrl
-  async fn find_file_url(
+  async fn find_file_url<'u, 'o>(
     &self,
-    url: &str,
-    options: &ImporterOptions,
+    url: &'u str,
+    options: &'o ImporterOptions,
   ) -> Result<Option<Url>>;
 }
 
