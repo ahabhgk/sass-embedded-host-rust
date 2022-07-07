@@ -73,9 +73,7 @@ impl ImporterRegistry {
       }
     };
     self.id += 1;
-    let mut proto = compile_request::Importer::default();
-    proto.importer = Some(i);
-    proto
+    compile_request::Importer { importer: Some(i) }
   }
 
   /// Handles a canonicalization request.
@@ -107,12 +105,10 @@ impl ImporterRegistry {
         };
         Ok(proto)
       }
-      Err(e) => {
-        let mut proto = CanonicalizeResponse::default();
-        proto.result =
-          Some(canonicalize_response::Result::Error(e.to_string()));
-        Ok(proto)
-      }
+      Err(e) => Ok(CanonicalizeResponse {
+        result: Some(canonicalize_response::Result::Error(e.to_string())),
+        ..Default::default()
+      }),
     }
   }
 
@@ -132,8 +128,10 @@ impl ImporterRegistry {
       Ok(result) => {
         let mut proto = ImportResponse::default();
         if let Some(result) = result {
-          let mut success = import_response::ImportSuccess::default();
-          success.contents = result.contents;
+          let mut success = import_response::ImportSuccess {
+            contents: result.contents,
+            ..Default::default()
+          };
           success.set_syntax(result.syntax);
           if let Some(source_map_url) = result.source_map_url {
             success.source_map_url = source_map_url;
@@ -142,11 +140,10 @@ impl ImporterRegistry {
         };
         Ok(proto)
       }
-      Err(e) => {
-        let mut proto = ImportResponse::default();
-        proto.result = Some(import_response::Result::Error(e.to_string()));
-        Ok(proto)
-      }
+      Err(e) => Ok(ImportResponse {
+        result: Some(import_response::Result::Error(e.to_string())),
+        ..Default::default()
+      }),
     }
   }
 
@@ -184,11 +181,10 @@ impl ImporterRegistry {
         };
         Ok(proto)
       }
-      Err(e) => {
-        let mut proto = FileImportResponse::default();
-        proto.result = Some(file_import_response::Result::Error(e.to_string()));
-        Ok(proto)
-      }
+      Err(e) => Ok(FileImportResponse {
+        result: Some(file_import_response::Result::Error(e.to_string())),
+        ..Default::default()
+      }),
     }
   }
 }

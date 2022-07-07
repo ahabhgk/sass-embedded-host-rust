@@ -11,16 +11,18 @@ mod sass_embedded_protocol;
 
 impl CompileRequest {
   fn new(importers: &ImporterRegistry, options: &Options) -> Self {
-    let mut request = CompileRequest::default();
-    request.importers = importers.importers();
-    request.global_functions = Vec::new(); // TODO
-    request.source_map = options.source_map;
-    request.source_map_include_sources = options.source_map_include_sources;
-    request.alert_color = options.alert_color.unwrap_or_else(|| {
-      supports_color::on(supports_color::Stream::Stdout).is_some()
-    });
-    request.alert_ascii = options.alert_ascii;
-    request.quiet_deps = options.quiet_deps;
+    let mut request = CompileRequest {
+      importers: importers.importers(),
+      global_functions: Vec::new(), // TODO
+      source_map: options.source_map,
+      source_map_include_sources: options.source_map_include_sources,
+      alert_color: options.alert_color.unwrap_or_else(|| {
+        supports_color::on(supports_color::Stream::Stdout).is_some()
+      }),
+      alert_ascii: options.alert_ascii,
+      quiet_deps: options.quiet_deps,
+      ..Default::default()
+    };
     request.set_style(options.style);
     request
   }
@@ -41,8 +43,10 @@ impl CompileRequest {
     options: &Options,
     string_options: StringOptions,
   ) -> Self {
-    let mut input = compile_request::StringInput::default();
-    input.source = source;
+    let mut input = compile_request::StringInput {
+      source,
+      ..Default::default()
+    };
     match string_options {
       StringOptions::WithImporter(o) => {
         input.set_syntax(o.syntax);
@@ -56,7 +60,7 @@ impl CompileRequest {
         }
       }
     };
-    let mut request = CompileRequest::new(importers, &options);
+    let mut request = CompileRequest::new(importers, options);
     request.input = Some(compile_request::Input::String(input));
     request
   }

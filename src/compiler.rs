@@ -4,7 +4,7 @@ use futures::{future, pin_mut, stream, StreamExt, TryStreamExt};
 use prost::Message;
 use tokio::{
   io::BufReader,
-  process::{ChildStdin, ChildStdout, Command},
+  process::{Child, Command},
 };
 use tokio_util::io::ReaderStream;
 
@@ -21,8 +21,7 @@ use crate::{
 };
 
 pub struct Embedded {
-  stdout: ChildStdout,
-  stdin: ChildStdin,
+  child: Child,
 }
 
 impl Embedded {
@@ -34,32 +33,28 @@ impl Embedded {
       .spawn()
       .unwrap();
 
-    Self {
-      stdout: child.stdout.unwrap(),
-      stdin: child.stdin.unwrap(),
-    }
+    Self { child }
   }
 
   pub async fn compile(
-    self,
+    mut self,
     request: CompileRequest,
     importers: &ImporterRegistry,
     logger: &LoggerRegistry,
   ) -> Result<CompileResponse> {
-    let stdin = self.stdin;
-    let mut dispatcher = Dispatcher::new(stdin, &importers, &logger);
+    let stdin = self.child.stdin.take().unwrap();
+    let mut dispatcher = Dispatcher::new(stdin, importers, logger);
     dispatcher.send_compile_request(request).await?;
 
-    let stdout = self.stdout;
+    let stdout = self.child.stdout.take().unwrap();
     let mut pt = PacketTransformer::default();
-    // TODO: refactor these shits
     let reader = ReaderStream::new(BufReader::new(stdout))
-      .map_err(|io_err| Error::from(io_err))
+      .map_err(Error::from)
       .flat_map(|res| match res {
         Ok(buf) => stream::iter(
           pt.decode(buf.to_vec())
             .into_iter()
-            .map(|b| Ok(b))
+            .map(Ok)
             .collect::<Vec<Result<Vec<u8>>>>(),
         ),
         Err(e) => stream::iter(vec![Err(e)]),

@@ -81,7 +81,7 @@ impl<'i, 'l> Dispatcher<'i, 'l> {
     };
     let inbound = InboundMessage::new(message);
     let buf = inbound.encode_length_delimited_to_vec();
-    self.stdin.lock().unwrap().write(&buf).await?;
+    self.stdin.lock().unwrap().write_all(&buf).await?;
     Ok(())
   }
 
@@ -129,8 +129,7 @@ impl<'i, 'l> Dispatcher<'i, 'l> {
       }
       outbound_message::Message::FunctionCallRequest(request) => {
         self.pending_outbound_requests.add(request.id);
-        // TODO
-        Ok(None)
+        unimplemented!("Not supported yet");
       }
       outbound_message::Message::Error(e) => Err(Error::Host(e.message)),
       outbound_message::Message::LogEvent(e) => {

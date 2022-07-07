@@ -16,11 +16,11 @@ pub fn compile_sync(
   mut options: Options,
 ) -> Result<CompileResult> {
   let exe = exe_path(&options);
-  let mut importers =
+  let importers =
     ImporterRegistry::new(options.importers.take(), options.load_paths.take());
   let logger = LoggerRegistry::new(options.logger.take());
 
-  let request = CompileRequest::with_path(path, &mut importers, &options);
+  let request = CompileRequest::with_path(path, &importers, &options);
   let rt = tokio::runtime::Runtime::new().unwrap();
   let response = rt.block_on(async {
     let embedded = Embedded::new(exe);
@@ -62,11 +62,11 @@ pub async fn compile(
   mut options: Options,
 ) -> Result<CompileResult> {
   let exe = exe_path(&options);
-  let mut importers =
+  let importers =
     ImporterRegistry::new(options.importers.take(), options.load_paths.take());
   let logger = LoggerRegistry::new(options.logger.take());
 
-  let request = CompileRequest::with_path(path, &mut importers, &options);
+  let request = CompileRequest::with_path(path, &importers, &options);
   let embedded = Embedded::new(exe);
   let response = embedded.compile(request, &importers, &logger).await?;
 
@@ -98,9 +98,8 @@ pub async fn compile_string(
 fn exe_path(options: &Options) -> String {
   options
     .exe_path
-    .as_ref()
-    .unwrap_or(&compiler_path::compiler_path().unwrap())
-    .to_string()
+    .clone()
+    .unwrap_or_else(|| compiler_path::compiler_path().unwrap())
 }
 
 fn handle_response(response: CompileResponse) -> Result<CompileResult> {
@@ -114,35 +113,5 @@ fn handle_response(response: CompileResponse) -> Result<CompileResult> {
     compile_response::Result::Failure(failure) => {
       Err(Exception::new(failure).into())
     }
-  }
-}
-
-#[cfg(test)]
-mod tests {
-  use crate::api::WithoutImporter;
-
-  use super::*;
-
-  #[tokio::test]
-  async fn test_compile_string() {
-    let res = compile_string(
-      ".foo {a: b}".to_string(),
-      Options::default(),
-      StringOptions::WithoutImporter(WithoutImporter::default()),
-    )
-    .await
-    .unwrap();
-    assert_eq!(res.css, ".foo {\n  a: b;\n}");
-  }
-
-  #[test]
-  fn test_compile_string_sync() {
-    let res = compile_string_sync(
-      ".foo {a: b}".to_string(),
-      Options::default(),
-      StringOptions::WithoutImporter(WithoutImporter::default()),
-    )
-    .unwrap();
-    assert_eq!(res.css, ".foo {\n  a: b;\n}");
   }
 }
