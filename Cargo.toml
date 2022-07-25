@@ -18,6 +18,9 @@ tokio = { version = "1", features = [
 tokio-stream = "0.1"
 tokio-util = { version = "0.7", features = ["io"] }
 supports-color = "1"
+parking_lot = "0.12.1"
+dashmap = "5.3.4"
+crossbeam-channel = "0.5.6"
 
 [dev-dependencies]
 tokio = { version = "1", features = [

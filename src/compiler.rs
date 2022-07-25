@@ -1,72 +1,46 @@
-use std::{ffi::OsStr, process::Stdio};
-
-use futures::{future, pin_mut, stream, StreamExt, TryStreamExt};
-use prost::Message;
-use tokio::{
-  io::BufReader,
-  process::{Child, Command},
-};
-use tokio_util::io::ReaderStream;
-
-use crate::{
-  dispatcher::Dispatcher,
-  importer_registry::ImporterRegistry,
-  logger_registry::LoggerRegistry,
-  packet_transformer::PacketTransformer,
-  pb::{
-    inbound_message::CompileRequest, outbound_message::CompileResponse,
-    OutboundMessage,
-  },
-  Error, Result,
+use std::{
+  ffi::OsStr,
+  io::{Read, Write},
+  process::{ChildStderr, ChildStdin, ChildStdout, Command, Stdio},
 };
 
-pub struct Embedded {
-  child: Child,
+use crate::varint;
+
+#[derive(Debug)]
+pub struct Compiler {
+  stdin: ChildStdin,
+  stdout: ChildStdout,
+  stderr: ChildStderr,
 }
 
-impl Embedded {
-  pub fn new(program: impl AsRef<OsStr>) -> Self {
-    let child = Command::new(program)
+impl Compiler {
+  pub fn new(path: impl AsRef<OsStr>) -> Self {
+    let cmd = Command::new(path)
       .stdin(Stdio::piped())
       .stdout(Stdio::piped())
       .stderr(Stdio::piped())
       .spawn()
       .unwrap();
+    let stdin = cmd.stdin.unwrap();
+    let stdout = cmd.stdout.unwrap();
+    let stderr = cmd.stderr.unwrap();
 
-    Self { child }
+    Self {
+      stdin,
+      stdout,
+      stderr,
+    }
   }
 
-  pub async fn compile(
-    mut self,
-    request: CompileRequest,
-    importers: &ImporterRegistry,
-    logger: &LoggerRegistry,
-  ) -> Result<CompileResponse> {
-    let stdin = self.child.stdin.take().unwrap();
-    let mut dispatcher = Dispatcher::new(stdin, importers, logger);
-    dispatcher.send_compile_request(request).await?;
+  pub fn write(&mut self, payload: &[u8]) -> Result<(), std::io::Error> {
+    varint::write(&mut self.stdin, payload.len())?;
+    self.stdin.write_all(payload)
+  }
 
-    let stdout = self.child.stdout.take().unwrap();
-    let mut pt = PacketTransformer::default();
-    let reader = ReaderStream::new(BufReader::new(stdout))
-      .map_err(Error::from)
-      .flat_map(|res| match res {
-        Ok(buf) => stream::iter(
-          pt.decode(buf.to_vec())
-            .into_iter()
-            .map(Ok)
-            .collect::<Vec<Result<Vec<u8>>>>(),
-        ),
-        Err(e) => stream::iter(vec![Err(e)]),
-      })
-      .and_then(|buf| {
-        let outbound = OutboundMessage::decode(buf.as_ref()).unwrap();
-        future::ok(outbound.message.unwrap())
-      })
-      .try_filter_map(|m| async {
-        dispatcher.handle_outbound_message(m).await
-      });
-    pin_mut!(reader);
-    reader.next().await.unwrap()
+  pub fn read(&mut self) -> Result<Vec<u8>, std::io::Error> {
+    let len = varint::read(&mut self.stdout)?;
+    let mut buf = vec![0; len];
+    self.stdout.read(&mut buf)?;
+    Ok(buf)
   }
 }

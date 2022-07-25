@@ -1,29 +1,16 @@
-mod api;
-mod compile;
+use channel::Channel;
+
+mod channel;
 mod compiler;
-mod compiler_path;
+mod connection;
 mod dispatcher;
-mod error;
-mod importer_registry;
-mod logger_registry;
-mod packet_transformer;
 mod pb;
-mod request_tracker;
+mod varint;
 
-use api::Logger;
-pub use api::{
-  FileImporter, Importer, ImporterOptions, ImporterResult, Options,
-  SassImporter, SassLogger, StringOptions, WithImporter, WithoutImporter,
-};
-pub use compile::{compile, compile_string};
-pub use compile::{compile_string_sync, compile_sync};
-pub use error::{Error, Result};
-
-#[derive(Debug, Default, Clone)]
-pub struct SilentLogger;
-
-impl Logger for SilentLogger {
-  fn warn(&self, _message: &str, _options: &api::LoggerWarnOptions) {}
-
-  fn debug(&self, _message: &str, _options: &api::LoggerDebugOptions) {}
+#[test]
+fn version_smoke() {
+  let mut ch = Channel::new("/Users/bytedance/Codes/sass-embedded-host-rust/dart-sass-embedded/dart-sass-embedded");
+  let conn = ch.connect();
+  let response = conn.version_request().unwrap();
+  dbg!(response);
 }
