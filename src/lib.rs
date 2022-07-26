@@ -24,6 +24,7 @@ mod tests {
   #[test]
   fn version_smoke() {
     let mut sass = Sass::new(exe_path());
-    assert_eq!(sass.info(), "sass-embedded\t#1.54.0");
+    let info = sass.info();
+    assert_eq!(info, "sass-embedded\t#1.54.0");
   }
 }

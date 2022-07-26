@@ -3,9 +3,11 @@ use std::{
   sync::Arc,
 };
 
+use parking_lot::Mutex;
+
 use crate::{
   compiler::Compiler,
-  connection::{Connected, Connection},
+  connection::{Connected, Connection, ConnectedGuard},
   dispatcher::Dispatcher,
   pb::InboundMessage,
 };
@@ -24,7 +26,7 @@ impl Channel {
     Self { path, dispatcher }
   }
 
-  pub fn connect(&mut self) -> Arc<Connection<Connected>> {
+  pub fn connect(&mut self) -> ConnectedGuard {
     let conn = Connection::new(Arc::clone(&self.dispatcher));
     match self.dispatcher.subscribe(conn) {
       Err(conn) => {

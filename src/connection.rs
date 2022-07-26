@@ -1,4 +1,8 @@
-use std::sync::Arc;
+use std::{
+  fmt::Debug,
+  ops::{Deref, DerefMut},
+  sync::Arc,
+};
 
 use crossbeam_channel::{Receiver, Sender};
 
@@ -21,10 +25,37 @@ pub struct Connected {
 #[derive(Debug)]
 pub struct Unconnected;
 
-#[derive(Debug)]
-pub struct Connection<S> {
+pub struct Connection<S: Debug> {
   state: S,
   dispatcher: Arc<Dispatcher>,
+}
+
+impl<S: Debug> Debug for Connection<S> {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    self.state.fmt(f)
+  }
+}
+
+pub struct ConnectedGuard(pub(crate) Arc<Connection<Connected>>);
+
+impl Drop for ConnectedGuard {
+  fn drop(&mut self) {
+    self.0.disconnect();
+  }
+}
+
+impl Deref for ConnectedGuard {
+  type Target = Arc<Connection<Connected>>;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
+
+impl DerefMut for ConnectedGuard {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.0
+  }
 }
 
 impl Connection<Unconnected> {
@@ -35,12 +66,12 @@ impl Connection<Unconnected> {
     }
   }
 
-  pub fn connect(self, id: u32) -> Arc<Connection<Connected>> {
+  pub(crate) fn connect(self, id: u32) -> ConnectedGuard {
     let (tx, rx) = crossbeam_channel::bounded(1);
-    Arc::new(Connection::<Connected> {
+    ConnectedGuard(Arc::new(Connection {
       state: Connected { id, tx, rx },
       dispatcher: self.dispatcher,
-    })
+    }))
   }
 }
 
@@ -49,7 +80,7 @@ impl Connection<Connected> {
     self.state.id
   }
 
-  pub fn disconnect(&self) {
+  fn disconnect(&self) {
     self.dispatcher.unsubscribe(&self.id());
   }
 

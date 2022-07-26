@@ -1,11 +1,11 @@
 use dashmap::DashMap;
 use parking_lot::Mutex;
 use prost::Message;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::{
   compiler::Compiler,
-  connection::{Connected, Connection, Unconnected},
+  connection::{Connected, ConnectedGuard, Connection, Unconnected},
   pb::{outbound_message, InboundMessage, OutboundMessage},
 };
 
@@ -42,14 +42,14 @@ impl Dispatcher {
           }
           break;
         }
-      }
+      };
     });
   }
 
   pub fn subscribe(
     &self,
     observer: Connection<Unconnected>,
-  ) -> Result<Arc<Connection<Connected>>, Connection<Unconnected>> {
+  ) -> Result<ConnectedGuard, Connection<Unconnected>> {
     let mut id = self.id.lock();
     if *id == Self::PROTOCOL_ERROR_ID {
       return Err(observer);
