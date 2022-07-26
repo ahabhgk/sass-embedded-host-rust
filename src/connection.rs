@@ -64,14 +64,12 @@ impl Connection<Connected> {
 
   pub fn compile_response(&self, response: CompileResponse) {}
 
-  pub fn version_request(&self) -> Result<VersionResponse, ()> {
-    self
-      .send_message(InboundMessage::new(
-        inbound_message::Message::VersionRequest(VersionRequest {
-          id: self.id(),
-        }),
-      ))
-      .unwrap();
+  pub fn version_request(&self) -> Result<VersionResponse, std::io::Error> {
+    self.send_message(InboundMessage::new(
+      inbound_message::Message::VersionRequest(VersionRequest {
+        id: self.id(),
+      }),
+    ))?;
     if let outbound_message::Message::VersionResponse(response) =
       self.state.rx.recv().unwrap()
     {
