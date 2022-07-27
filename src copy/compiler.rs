@@ -60,6 +60,7 @@ impl Embedded {
         Err(e) => stream::iter(vec![Err(e)]),
       })
       .and_then(|buf| {
+        dbg!(buf.len(), buf.last());
         let outbound = OutboundMessage::decode(buf.as_ref()).unwrap();
         future::ok(outbound.message.unwrap())
       })

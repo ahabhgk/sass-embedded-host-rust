@@ -9,17 +9,21 @@ use crossbeam_channel::{Receiver, Sender};
 use crate::{
   dispatcher::Dispatcher,
   pb::{
-    inbound_message::{self, VersionRequest},
+    inbound_message::{
+      self, compile_request::Input, CompileRequest, VersionRequest,
+    },
     outbound_message::{self, CompileResponse, VersionResponse},
-    InboundMessage,
+    InboundMessage, OutputStyle,
   },
 };
+
+type Response = Result<outbound_message::Message, String>;
 
 #[derive(Debug)]
 pub struct Connected {
   id: u32,
-  tx: Sender<outbound_message::Message>,
-  rx: Receiver<outbound_message::Message>,
+  tx: Sender<Response>,
+  rx: Receiver<Response>,
 }
 
 #[derive(Debug)]
@@ -66,7 +70,7 @@ impl Connection<Unconnected> {
     }
   }
 
-  pub(crate) fn connect(self, id: u32) -> ConnectedGuard {
+  pub fn connect(self, id: u32) -> ConnectedGuard {
     let (tx, rx) = crossbeam_channel::bounded(1);
     ConnectedGuard(Arc::new(Connection {
       state: Connected { id, tx, rx },
@@ -91,25 +95,59 @@ impl Connection<Connected> {
     self.dispatcher.send_message(inbound_message)
   }
 
-  pub fn error(&self, message: &str) {}
-
-  pub fn compile_response(&self, response: CompileResponse) {}
-
-  pub fn version_request(&self) -> Result<VersionResponse, std::io::Error> {
-    self.send_message(InboundMessage::new(
-      inbound_message::Message::VersionRequest(VersionRequest {
-        id: self.id(),
-      }),
-    ))?;
-    if let outbound_message::Message::VersionResponse(response) =
-      self.state.rx.recv().unwrap()
-    {
-      return Ok(response);
-    }
-    unreachable!()
+  pub fn error(&self, message: &str) {
+    self.response(Err(message.to_owned()));
   }
 
-  pub fn version_response(&self, response: outbound_message::Message) {
+  pub fn compile_request(
+    &self,
+    mut request: CompileRequest,
+  ) -> Result<CompileResponse, String> {
+    request.id = self.id();
+    self
+      .send_message(InboundMessage::new(
+        inbound_message::Message::CompileRequest(request),
+      ))
+      .unwrap();
+    self
+      .state
+      .rx
+      .recv()
+      .unwrap()
+      .map(|response| match response {
+        outbound_message::Message::CompileResponse(response) => response,
+        _ => unreachable!(),
+      })
+  }
+
+  pub fn compile_response(&self, response: CompileResponse) {
+    self.response(Ok(outbound_message::Message::CompileResponse(response)));
+  }
+
+  pub fn version_request(&self) -> Result<VersionResponse, String> {
+    self
+      .send_message(InboundMessage::new(
+        inbound_message::Message::VersionRequest(VersionRequest {
+          id: self.id(),
+        }),
+      ))
+      .unwrap();
+    self
+      .state
+      .rx
+      .recv()
+      .unwrap()
+      .map(|response| match response {
+        outbound_message::Message::VersionResponse(response) => response,
+        _ => unreachable!(),
+      })
+  }
+
+  pub fn version_response(&self, response: VersionResponse) {
+    self.response(Ok(outbound_message::Message::VersionResponse(response)));
+  }
+
+  fn response(&self, response: Response) {
     self.state.tx.send(response).unwrap();
   }
 }

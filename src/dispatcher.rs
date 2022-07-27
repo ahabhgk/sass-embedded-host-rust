@@ -11,7 +11,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Dispatcher {
-  compiler: Mutex<Compiler>,
+  compiler: Compiler,
   observers: DashMap<u32, Arc<Connection<Connected>>>,
   id: Mutex<u32>,
 }
@@ -21,7 +21,7 @@ impl Dispatcher {
 
   pub fn new(compiler: Compiler) -> Arc<Dispatcher> {
     let this = Arc::new(Self {
-      compiler: Mutex::new(compiler),
+      compiler,
       observers: DashMap::new(),
       id: Mutex::new(0),
     });
@@ -31,9 +31,11 @@ impl Dispatcher {
 
   fn spawn(dispatcher: Arc<Dispatcher>) {
     std::thread::spawn(move || loop {
-      match dispatcher.compiler.lock().read() {
-        Ok(buf) => {
-          dispatcher.receive_message(OutboundMessage::decode(&buf[..]).unwrap())
+      dbg!("loop");
+      match dispatcher.compiler.read() {
+        Ok(msg) => {
+          dbg!("msg");
+          dispatcher.receive_message(msg)
         }
         Err(e) => {
           *dispatcher.id.lock() = Self::PROTOCOL_ERROR_ID;
@@ -68,7 +70,8 @@ impl Dispatcher {
     &self,
     inbound_message: InboundMessage,
   ) -> Result<(), std::io::Error> {
-    self.compiler.lock().write(&inbound_message.encode_to_vec())
+    dbg!("send");
+    self.compiler.write(inbound_message)
   }
 
   fn receive_message(&self, outbound_message: OutboundMessage) {
@@ -86,14 +89,14 @@ impl Dispatcher {
           }
         }
       }
-      outbound_message::Message::CompileResponse(r) => {
-        if let Some(ob) = self.observers.get(&r.id) {
-          ob.compile_response(r);
+      outbound_message::Message::CompileResponse(response) => {
+        if let Some(ob) = self.observers.get(&response.id) {
+          ob.compile_response(response);
         }
       }
-      outbound_message::Message::VersionResponse(r) => {
-        if let Some(ob) = self.observers.get(&r.id) {
-          ob.version_response(outbound_message::Message::VersionResponse(r));
+      outbound_message::Message::VersionResponse(response) => {
+        if let Some(ob) = self.observers.get(&response.id) {
+          ob.version_response(response);
         }
       }
       outbound_message::Message::LogEvent(_) => todo!(),
