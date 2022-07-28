@@ -9,15 +9,18 @@ use crossbeam_channel::{Receiver, Sender};
 use crate::{
   dispatcher::Dispatcher,
   pb::{
-    inbound_message::{
-      self, compile_request::Input, CompileRequest, VersionRequest,
-    },
-    outbound_message::{self, CompileResponse, VersionResponse},
-    InboundMessage, OutputStyle,
+    inbound_message::{self, CompileRequest, VersionRequest},
+    outbound_message::{CompileResponse, VersionResponse},
+    InboundMessage, ProtocolError,
   },
 };
 
-type Response = Result<outbound_message::Message, String>;
+enum ProtocolResponse {
+  Compile(CompileResponse),
+  Version(VersionResponse),
+}
+
+type Response = Result<ProtocolResponse, ProtocolError>;
 
 #[derive(Debug)]
 pub struct Connected {
@@ -88,63 +91,56 @@ impl Connection<Connected> {
     self.dispatcher.unsubscribe(&self.id());
   }
 
-  fn send_message(
-    &self,
-    inbound_message: InboundMessage,
-  ) -> Result<(), std::io::Error> {
-    self.dispatcher.send_message(inbound_message)
+  fn send_message(&self, inbound_message: InboundMessage) {
+    self.dispatcher.send_message(inbound_message);
   }
 
-  pub fn error(&self, message: &str) {
-    self.response(Err(message.to_owned()));
+  pub fn error(&self, message: ProtocolError) {
+    self.response(Err(message));
   }
 
   pub fn compile_request(
     &self,
     mut request: CompileRequest,
-  ) -> Result<CompileResponse, String> {
+  ) -> Result<CompileResponse, ProtocolError> {
     request.id = self.id();
-    self
-      .send_message(InboundMessage::new(
-        inbound_message::Message::CompileRequest(request),
-      ))
-      .unwrap();
+    self.send_message(InboundMessage::new(
+      inbound_message::Message::CompileRequest(request),
+    ));
     self
       .state
       .rx
       .recv()
       .unwrap()
       .map(|response| match response {
-        outbound_message::Message::CompileResponse(response) => response,
+        ProtocolResponse::Compile(response) => response,
         _ => unreachable!(),
       })
   }
 
   pub fn compile_response(&self, response: CompileResponse) {
-    self.response(Ok(outbound_message::Message::CompileResponse(response)));
+    self.response(Ok(ProtocolResponse::Compile(response)));
   }
 
-  pub fn version_request(&self) -> Result<VersionResponse, String> {
-    self
-      .send_message(InboundMessage::new(
-        inbound_message::Message::VersionRequest(VersionRequest {
-          id: self.id(),
-        }),
-      ))
-      .unwrap();
+  pub fn version_request(&self) -> Result<VersionResponse, ProtocolError> {
+    self.send_message(InboundMessage::new(
+      inbound_message::Message::VersionRequest(VersionRequest {
+        id: self.id(),
+      }),
+    ));
     self
       .state
       .rx
       .recv()
       .unwrap()
       .map(|response| match response {
-        outbound_message::Message::VersionResponse(response) => response,
+        ProtocolResponse::Version(response) => response,
         _ => unreachable!(),
       })
   }
 
   pub fn version_response(&self, response: VersionResponse) {
-    self.response(Ok(outbound_message::Message::VersionResponse(response)));
+    self.response(Ok(ProtocolResponse::Version(response)));
   }
 
   fn response(&self, response: Response) {

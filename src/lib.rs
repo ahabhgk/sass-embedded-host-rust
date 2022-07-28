@@ -8,7 +8,8 @@ mod pb;
 mod varint;
 
 pub use api::{
-  CompileResult, Options, OptionsBuilder, StringOptions, StringOptionsBuilder,
+  CompileResult, Exception, Options, OptionsBuilder, Result, StringOptions,
+  StringOptionsBuilder,
 };
 pub use embedded::Embedded;
 pub use embedded::Embedded as Sass;

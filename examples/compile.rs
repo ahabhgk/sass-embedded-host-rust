@@ -1,3 +1,5 @@
+use std::time;
+
 use sass_embedded_host_rust::{Options, Sass};
 
 fn exe_path() -> std::path::PathBuf {
@@ -7,6 +9,7 @@ fn exe_path() -> std::path::PathBuf {
 }
 
 fn main() {
+  let now = time::Instant::now();
   let mut sass = Sass::new(exe_path());
   let res1 = sass
     .compile(
@@ -32,5 +35,11 @@ fn main() {
       Options::default(),
     )
     .unwrap();
-  dbg!(res1, res2, res3, res4);
+  dbg!(now.elapsed());
+  dbg!(
+    res1.loaded_urls,
+    res2.loaded_urls,
+    res3.loaded_urls,
+    res4.loaded_urls
+  );
 }

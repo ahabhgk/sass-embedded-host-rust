@@ -3,13 +3,10 @@ use std::{
   sync::Arc,
 };
 
-use parking_lot::Mutex;
-
 use crate::{
   compiler::Compiler,
-  connection::{Connected, Connection, ConnectedGuard},
+  connection::{ConnectedGuard, Connection},
   dispatcher::Dispatcher,
-  pb::InboundMessage,
 };
 
 #[derive(Debug)]

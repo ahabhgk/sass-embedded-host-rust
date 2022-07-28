@@ -1,12 +1,14 @@
+use std::fmt::Display;
+
 use url::Url;
 
 use crate::pb::{
   inbound_message::CompileRequest,
   outbound_message::{
-    compile_response::{self, CompileSuccess},
+    compile_response::{self, CompileFailure, CompileSuccess},
     CompileResponse,
   },
-  OutputStyle, Syntax,
+  OutputStyle, ProtocolError, SourceSpan, Syntax,
 };
 
 /// https://sass-lang.com/documentation/js-api/interfaces/Options
@@ -36,9 +38,6 @@ pub struct Options {
   pub verbose: bool,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#charset
   pub charset: bool,
-
-  // TODO: find a better way??
-  pub exe_path: Option<String>,
 }
 
 impl Default for Options {
@@ -53,7 +52,6 @@ impl Default for Options {
       style: OutputStyle::default(),
       verbose: false,
       charset: true,
-      exe_path: None,
     }
   }
 }
@@ -119,11 +117,6 @@ impl OptionsBuilder {
 
   pub fn charset(mut self, arg: bool) -> Self {
     self.common.charset = arg;
-    self
-  }
-
-  pub fn exe_path(mut self, arg: &str) -> Self {
-    self.common.exe_path = Some(arg.to_owned());
     self
   }
 }
@@ -222,11 +215,6 @@ impl StringOptionsBuilder {
     self.options.charset = arg;
     self
   }
-
-  pub fn exe_path(mut self, arg: &str) -> Self {
-    self.options.exe_path = Some(arg.to_owned());
-    self
-  }
 }
 
 impl From<Options> for CompileRequest {
@@ -258,19 +246,14 @@ pub struct CompileResult {
 }
 
 impl TryFrom<CompileResponse> for CompileResult {
-  type Error = ();
+  type Error = Exception;
 
-  fn try_from(response: CompileResponse) -> Result<Self, Self::Error> {
-    let res = response.result.ok_or_else(|| {
-      // Error::Compile(
-      //   "OutboundMessage.CompileResponse.result is not set".to_string(),
-      // )
-    })?;
+  fn try_from(response: CompileResponse) -> Result<Self> {
+    let res = response.result.unwrap();
     match res {
       compile_response::Result::Success(success) => Ok(success.into()),
       compile_response::Result::Failure(failure) => {
-        Err(())
-        // Err(Exception::new(failure).into())
+        Err(Exception::from(failure))
       }
     }
   }
@@ -286,6 +269,65 @@ impl From<CompileSuccess> for CompileResult {
       } else {
         Some(s.source_map)
       },
+    }
+  }
+}
+
+pub type Result<T> = std::result::Result<T, Exception>;
+
+#[derive(Debug)]
+pub struct Exception {
+  message: String,
+  sass_message: Option<String>,
+  sass_stack: Option<String>,
+  span: Option<SourceSpan>,
+}
+
+impl Exception {
+  pub fn message(&self) -> &str {
+    &self.message
+  }
+
+  pub fn sass_message(&self) -> Option<&str> {
+    self.sass_message.as_deref()
+  }
+
+  pub fn sass_stack(&self) -> Option<&str> {
+    self.sass_stack.as_deref()
+  }
+
+  pub fn span(&self) -> Option<&SourceSpan> {
+    self.span.as_ref()
+  }
+}
+
+impl std::error::Error for Exception {}
+
+impl Display for Exception {
+  /// https://sass-lang.com/documentation/js-api/classes/Exception#toString
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.message)
+  }
+}
+
+impl From<CompileFailure> for Exception {
+  fn from(failure: CompileFailure) -> Self {
+    Self {
+      message: failure.formatted,
+      sass_message: Some(failure.message),
+      sass_stack: Some(failure.stack_trace),
+      span: failure.span,
+    }
+  }
+}
+
+impl From<ProtocolError> for Exception {
+  fn from(e: ProtocolError) -> Self {
+    Self {
+      message: e.message,
+      sass_message: None,
+      sass_stack: None,
+      span: None,
     }
   }
 }

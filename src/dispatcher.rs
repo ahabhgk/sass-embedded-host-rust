@@ -1,7 +1,6 @@
 use dashmap::DashMap;
 use parking_lot::Mutex;
-use prost::Message;
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use crate::{
   compiler::Compiler,
@@ -17,7 +16,7 @@ pub struct Dispatcher {
 }
 
 impl Dispatcher {
-  const PROTOCOL_ERROR_ID: u32 = 0xffffffff;
+  const PROTOCOL_ERROR_ID: u32 = 0xffffffff; // u32::MAX
 
   pub fn new(compiler: Compiler) -> Arc<Dispatcher> {
     let this = Arc::new(Self {
@@ -31,20 +30,7 @@ impl Dispatcher {
 
   fn spawn(dispatcher: Arc<Dispatcher>) {
     std::thread::spawn(move || loop {
-      dbg!("loop");
-      match dispatcher.compiler.read() {
-        Ok(msg) => {
-          dbg!("msg");
-          dispatcher.receive_message(msg)
-        }
-        Err(e) => {
-          *dispatcher.id.lock() = Self::PROTOCOL_ERROR_ID;
-          for ob in dispatcher.observers.iter() {
-            ob.error(&e.to_string());
-          }
-          break;
-        }
-      };
+      dispatcher.receive_message(dispatcher.compiler.read());
     });
   }
 
@@ -66,12 +52,8 @@ impl Dispatcher {
     self.observers.remove(&id);
   }
 
-  pub fn send_message(
-    &self,
-    inbound_message: InboundMessage,
-  ) -> Result<(), std::io::Error> {
-    dbg!("send");
-    self.compiler.write(inbound_message)
+  pub fn send_message(&self, inbound_message: InboundMessage) {
+    self.compiler.write(inbound_message);
   }
 
   fn receive_message(&self, outbound_message: OutboundMessage) {
@@ -81,11 +63,11 @@ impl Dispatcher {
         *self.id.lock() = Self::PROTOCOL_ERROR_ID;
         if e.id == Self::PROTOCOL_ERROR_ID {
           for ob in self.observers.iter() {
-            ob.error(&e.message);
+            ob.error(e.clone());
           }
         } else {
           if let Some(ob) = self.observers.get(&e.id) {
-            ob.error(&e.message);
+            ob.error(e);
           }
         }
       }

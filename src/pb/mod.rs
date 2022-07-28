@@ -5,8 +5,9 @@
 
 pub use sass_embedded_protocol::*;
 
-use self::inbound_message::{compile_request, CompileRequest};
+use self::inbound_message::compile_request;
 
+#[path = "./sass.embedded_protocol.rs"]
 mod sass_embedded_protocol;
 
 // impl CompileRequest {

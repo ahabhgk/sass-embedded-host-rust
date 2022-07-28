@@ -1,13 +1,9 @@
-use std::{ffi::OsStr, path::Path};
+use std::ffi::OsStr;
 
 use crate::{
-  api::{CompileResult, Options},
   channel::Channel,
-  connection::Connection,
-  pb::{
-    inbound_message::{compile_request::Input, CompileRequest},
-    OutputStyle,
-  },
+  pb::inbound_message::{compile_request::Input, CompileRequest},
+  CompileResult, Options, Result,
 };
 
 #[derive(Debug)]
@@ -26,15 +22,15 @@ impl Embedded {
     &mut self,
     path: impl Into<String>,
     options: Options,
-  ) -> Result<CompileResult, ()> {
+  ) -> Result<CompileResult> {
     let conn = self.channel.connect();
     let mut request = CompileRequest::from(options);
     request.input = Some(Input::Path(path.into()));
-    let response = conn.compile_request(request).unwrap();
+    let response = conn.compile_request(request)?;
     Ok(CompileResult::try_from(response)?)
   }
 
-  pub fn info(&mut self) -> Result<String, String> {
+  pub fn info(&mut self) -> Result<String> {
     let conn = self.channel.connect();
     let response = conn.version_request()?;
     Ok(format!(
