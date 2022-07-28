@@ -1,0 +1,158 @@
+use std::collections::HashMap;
+
+use url::Url;
+
+use crate::{
+  options::{FileImporter, Importer, ImporterOptions, SassImporter},
+  protocol::{
+    inbound_message::{
+      canonicalize_response, compile_request, file_import_response,
+      import_response::{self, ImportSuccess},
+      CanonicalizeResponse, FileImportResponse, ImportResponse,
+    },
+    outbound_message::{CanonicalizeRequest, FileImportRequest, ImportRequest},
+  },
+};
+
+/// A registry of importers defined in the host that can be invoked by the
+/// compiler.
+#[derive(Debug)]
+pub struct ImporterRegistry {
+  /// Protocol buffer representations of the registered importers.
+  importers: Vec<compile_request::Importer>,
+  /// The next ID to use for an importer.
+  id: u32,
+  /// A map from importer IDs to their corresponding importers.
+  importers_by_id: HashMap<u32, Box<dyn Importer>>,
+  /// A map from file importer IDs to their corresponding importers.
+  file_importers_by_id: HashMap<u32, Box<dyn FileImporter>>,
+}
+
+impl ImporterRegistry {
+  pub fn new(
+    importers: Option<Vec<SassImporter>>,
+    load_paths: Option<Vec<String>>,
+  ) -> Self {
+    let mut this = Self {
+      importers: Vec::new(),
+      id: 0,
+      importers_by_id: HashMap::new(),
+      file_importers_by_id: HashMap::new(),
+    };
+    let mut importers: Vec<compile_request::Importer> = importers
+      .unwrap_or_default()
+      .into_iter()
+      .map(|importer| this.register(importer))
+      .collect();
+    importers.extend(load_paths.unwrap_or_default().into_iter().map(|p| {
+      let i = compile_request::importer::Importer::Path(p);
+      compile_request::Importer { importer: Some(i) }
+    }));
+    this.importers = importers;
+    this
+  }
+
+  /// Get all protofied importers.
+  pub fn importers(&self) -> Vec<compile_request::Importer> {
+    self.importers.clone()
+  }
+
+  /// Converts an importer to a proto.
+  pub fn register(
+    &mut self,
+    importer: SassImporter,
+  ) -> compile_request::Importer {
+    let i = match importer {
+      SassImporter::Importer(i) => {
+        self.importers_by_id.insert(self.id, i);
+        compile_request::importer::Importer::ImporterId(self.id)
+      }
+      SassImporter::FileImporter(i) => {
+        self.file_importers_by_id.insert(self.id, i);
+        compile_request::importer::Importer::FileImporterId(self.id)
+      }
+    };
+    self.id += 1;
+    compile_request::Importer { importer: Some(i) }
+  }
+
+  /// Handles a canonicalization request.
+  pub fn canonicalize(
+    &self,
+    request: &CanonicalizeRequest,
+  ) -> CanonicalizeResponse {
+    let importer = self.importers_by_id.get(&request.importer_id).unwrap();
+    match importer.canonicalize(
+      &request.url,
+      &ImporterOptions {
+        from_import: request.from_import,
+      },
+    ) {
+      Ok(url) => CanonicalizeResponse {
+        id: request.id,
+        result: if let Some(url) = url {
+          Some(canonicalize_response::Result::Url(url.to_string()))
+        } else {
+          None
+        },
+      },
+      Err(e) => CanonicalizeResponse {
+        id: request.id,
+        result: Some(canonicalize_response::Result::Error(e.to_string())),
+      },
+    }
+  }
+
+  /// Handles an import request.
+  pub fn import(&self, request: &ImportRequest) -> ImportResponse {
+    let importer = self.importers_by_id.get(&request.importer_id).unwrap();
+    match importer.load(&Url::parse(&request.url).unwrap()) {
+      Ok(result) => ImportResponse {
+        id: request.id,
+        result: if let Some(result) = result {
+          Some(import_response::Result::Success(ImportSuccess {
+            contents: result.contents,
+            syntax: result.syntax as i32,
+            source_map_url: result.source_map_url.unwrap_or_default(),
+          }))
+        } else {
+          None
+        },
+      },
+      Err(e) => ImportResponse {
+        id: request.id,
+        result: Some(import_response::Result::Error(e.to_string())),
+      },
+    }
+  }
+
+  /// Handles a file import request.
+  pub fn file_import(&self, request: &FileImportRequest) -> FileImportResponse {
+    let importer = self.file_importers_by_id.get(&request.importer_id).unwrap();
+    match importer.find_file_url(
+      &request.url,
+      &ImporterOptions {
+        from_import: request.from_import,
+      },
+    ) {
+      Ok(url) => FileImportResponse {
+        id: request.id,
+        result: if let Some(url) = url {
+          if url.scheme() != "file" {
+            panic!(
+              "FileImporter {:?} returned non-file: URL {} for URL {}.",
+              importer, url, request.url
+            );
+          }
+          Some(file_import_response::Result::FileUrl(url.to_string()))
+        } else {
+          None
+        },
+      },
+      Err(e) => FileImportResponse {
+        id: request.id,
+        result: Some(file_import_response::Result::Error(e.to_string())),
+      },
+    }
+  }
+}

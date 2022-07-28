@@ -1,19 +1,22 @@
-pub mod api;
 mod channel;
 mod compiler;
 mod connection;
 mod dispatcher;
 mod embedded;
-mod pb;
+mod error;
+mod importer_registry;
+mod logger_registry;
+mod options;
+mod protocol;
 mod varint;
 
-pub use api::{
-  CompileResult, Exception, Options, OptionsBuilder, Result, StringOptions,
-  StringOptionsBuilder,
+pub use embedded::{CompileResult, Embedded, Embedded as Sass};
+pub use error::{Exception, Result};
+pub use options::{
+  FileImporter, Importer, Logger, LoggerDebugOptions, LoggerWarnOptions,
+  Options, OptionsBuilder, SassLogger, StringOptions, StringOptionsBuilder,
 };
-pub use embedded::Embedded;
-pub use embedded::Embedded as Sass;
-pub use pb::{OutputStyle, Syntax};
+pub use protocol::{OutputStyle, Syntax};
 pub use url::{self, Url};
 
 #[cfg(test)]

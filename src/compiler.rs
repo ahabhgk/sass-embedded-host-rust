@@ -9,7 +9,7 @@ use parking_lot::Mutex;
 use prost::Message;
 
 use crate::{
-  pb::{InboundMessage, OutboundMessage},
+  protocol::{InboundMessage, OutboundMessage},
   varint,
 };
 

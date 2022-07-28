@@ -1,19 +1,20 @@
 use crate::{
-  api::{LoggerDebugOptions, LoggerWarnOptions, SassLogger},
-  pb::{outbound_message::LogEvent, LogEventType},
+  protocol::{outbound_message::LogEvent, LogEventType},
+  LoggerDebugOptions, LoggerWarnOptions, SassLogger,
 };
 
+#[derive(Debug)]
 pub struct LoggerRegistry {
-  loggers: Option<SassLogger>,
+  logger: Option<SassLogger>,
 }
 
 impl LoggerRegistry {
-  pub fn new(loggers: Option<SassLogger>) -> Self {
-    Self { loggers }
+  pub fn new(logger: Option<SassLogger>) -> Self {
+    Self { logger }
   }
 
   pub fn log(&self, event: LogEvent) {
-    if let Some(logger) = &self.loggers {
+    if let Some(logger) = &self.logger {
       if event.r#type() == LogEventType::Debug {
         logger.debug(&event.message, &LoggerDebugOptions { span: event.span });
       } else {

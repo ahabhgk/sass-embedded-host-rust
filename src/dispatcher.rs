@@ -5,7 +5,9 @@ use std::sync::Arc;
 use crate::{
   compiler::Compiler,
   connection::{Connected, ConnectedGuard, Connection, Unconnected},
-  pb::{outbound_message, InboundMessage, OutboundMessage},
+  importer_registry::ImporterRegistry,
+  logger_registry::LoggerRegistry,
+  protocol::{outbound_message, InboundMessage, OutboundMessage},
 };
 
 #[derive(Debug)]
@@ -37,13 +39,22 @@ impl Dispatcher {
   pub fn subscribe(
     &self,
     observer: Connection<Unconnected>,
-  ) -> Result<ConnectedGuard, Connection<Unconnected>> {
+    logger_registry: Option<LoggerRegistry>,
+    importer_registry: Option<ImporterRegistry>,
+  ) -> Result<
+    ConnectedGuard,
+    (
+      Connection<Unconnected>,
+      Option<LoggerRegistry>,
+      Option<ImporterRegistry>,
+    ),
+  > {
     let mut id = self.id.lock();
     if *id == Self::PROTOCOL_ERROR_ID {
-      return Err(observer);
+      return Err((observer, logger_registry, importer_registry));
     }
-    let observer = observer.connect(*id);
-    self.observers.insert(*id, Arc::clone(&observer));
+    let observer = observer.connect(*id, logger_registry, importer_registry);
+    self.observers.insert(*id, Arc::clone(&observer.0));
     *id += 1;
     Ok(observer)
   }
@@ -71,20 +82,36 @@ impl Dispatcher {
           }
         }
       }
-      outbound_message::Message::CompileResponse(response) => {
-        if let Some(ob) = self.observers.get(&response.id) {
-          ob.compile_response(response);
+      outbound_message::Message::CompileResponse(e) => {
+        if let Some(ob) = self.observers.get(&e.id) {
+          ob.compile_response(e);
         }
       }
-      outbound_message::Message::VersionResponse(response) => {
-        if let Some(ob) = self.observers.get(&response.id) {
-          ob.version_response(response);
+      outbound_message::Message::VersionResponse(e) => {
+        if let Some(ob) = self.observers.get(&e.id) {
+          ob.version_response(e);
         }
       }
-      outbound_message::Message::LogEvent(_) => todo!(),
-      outbound_message::Message::CanonicalizeRequest(_) => todo!(),
-      outbound_message::Message::ImportRequest(_) => todo!(),
-      outbound_message::Message::FileImportRequest(_) => todo!(),
+      outbound_message::Message::LogEvent(e) => {
+        if let Some(ob) = self.observers.get(&e.compilation_id) {
+          ob.log_event(e);
+        }
+      }
+      outbound_message::Message::CanonicalizeRequest(e) => {
+        if let Some(ob) = self.observers.get(&e.compilation_id) {
+          ob.canonicalize_request(e);
+        }
+      }
+      outbound_message::Message::ImportRequest(e) => {
+        if let Some(ob) = self.observers.get(&e.compilation_id) {
+          ob.import_request(e);
+        }
+      }
+      outbound_message::Message::FileImportRequest(e) => {
+        if let Some(ob) = self.observers.get(&e.compilation_id) {
+          ob.file_import_request(e);
+        }
+      }
       outbound_message::Message::FunctionCallRequest(_) => todo!(),
     }
   }
