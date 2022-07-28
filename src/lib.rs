@@ -1,29 +1,39 @@
-mod api;
-mod compile;
+mod channel;
 mod compiler;
-mod compiler_path;
+mod connection;
 mod dispatcher;
+mod embedded;
 mod error;
 mod importer_registry;
 mod logger_registry;
-mod packet_transformer;
-mod pb;
-mod request_tracker;
+mod options;
+mod protocol;
+mod varint;
 
-use api::Logger;
-pub use api::{
-  FileImporter, Importer, ImporterOptions, ImporterResult, Options,
-  SassImporter, SassLogger, StringOptions, WithImporter, WithoutImporter,
+pub use embedded::{CompileResult, Embedded, Embedded as Sass};
+pub use error::{Exception, Result};
+pub use options::{
+  FileImporter, Importer, Logger, LoggerDebugOptions, LoggerWarnOptions,
+  Options, OptionsBuilder, SassLogger, StringOptions, StringOptionsBuilder,
 };
-pub use compile::{compile, compile_string};
-pub use compile::{compile_string_sync, compile_sync};
-pub use error::{Error, Result};
+pub use protocol::{OutputStyle, Syntax};
+pub use url::{self, Url};
 
-#[derive(Debug, Default, Clone)]
-pub struct SilentLogger;
+#[cfg(test)]
+pub fn exe_path() -> std::path::PathBuf {
+  std::path::PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
+    .join("sass_embedded")
+    .join("dart-sass-embedded")
+}
 
-impl Logger for SilentLogger {
-  fn warn(&self, _message: &str, _options: &api::LoggerWarnOptions) {}
+#[cfg(test)]
+mod tests {
+  use super::*;
 
-  fn debug(&self, _message: &str, _options: &api::LoggerDebugOptions) {}
+  #[test]
+  fn version_smoke() {
+    let mut sass = Sass::new(exe_path());
+    let info = sass.info().unwrap();
+    assert_eq!(info, "sass-embedded\t#1.54.0");
+  }
 }

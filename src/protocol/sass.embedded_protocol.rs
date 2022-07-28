@@ -69,6 +69,9 @@ pub mod inbound_message {
     /// Whether to include sources in the generated sourcemap
     #[prost(bool, tag = "12")]
     pub source_map_include_sources: bool,
+    /// Whether to emit a `@charset`/BOM for non-ASCII stylesheets.
+    #[prost(bool, tag = "13")]
+    pub charset: bool,
     /// The input stylesheet to parse. Mandatory.
     #[prost(oneof = "compile_request::Input", tags = "2, 3")]
     pub input: ::core::option::Option<compile_request::Input>,

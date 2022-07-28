@@ -3,13 +3,12 @@ use std::collections::HashMap;
 use url::Url;
 
 use crate::{
-  api::{FileImporter, Importer, ImporterOptions, Result, SassImporter},
-  error::Error,
-  pb::{
+  options::{FileImporter, Importer, ImporterOptions, SassImporter},
+  protocol::{
     inbound_message::{
       canonicalize_response, compile_request, file_import_response,
-      import_response, CanonicalizeResponse, FileImportResponse,
-      ImportResponse,
+      import_response::{self, ImportSuccess},
+      CanonicalizeResponse, FileImportResponse, ImportResponse,
     },
     outbound_message::{CanonicalizeRequest, FileImportRequest, ImportRequest},
   },
@@ -17,6 +16,7 @@ use crate::{
 
 /// A registry of importers defined in the host that can be invoked by the
 /// compiler.
+#[derive(Debug)]
 pub struct ImporterRegistry {
   /// Protocol buffer representations of the registered importers.
   importers: Vec<compile_request::Importer>,
@@ -46,7 +46,7 @@ impl ImporterRegistry {
       .collect();
     importers.extend(load_paths.unwrap_or_default().into_iter().map(|p| {
       let i = compile_request::importer::Importer::Path(p);
-      compile_request::Importer::new(i)
+      compile_request::Importer { importer: Some(i) }
     }));
     this.importers = importers;
     this
@@ -77,114 +77,82 @@ impl ImporterRegistry {
   }
 
   /// Handles a canonicalization request.
-  pub async fn canonicalize(
+  pub fn canonicalize(
     &self,
     request: &CanonicalizeRequest,
-  ) -> Result<CanonicalizeResponse> {
-    let importer =
-      self
-        .importers_by_id
-        .get(&request.importer_id)
-        .ok_or_else(|| {
-          Error::Compile("Unknown CanonicalizeRequest.importer_id".to_string())
-        })?;
-    match importer
-      .canonicalize(
-        &request.url,
-        &ImporterOptions {
-          from_import: request.from_import,
+  ) -> CanonicalizeResponse {
+    let importer = self.importers_by_id.get(&request.importer_id).unwrap();
+    match importer.canonicalize(
+      &request.url,
+      &ImporterOptions {
+        from_import: request.from_import,
+      },
+    ) {
+      Ok(url) => CanonicalizeResponse {
+        id: request.id,
+        result: if let Some(url) = url {
+          Some(canonicalize_response::Result::Url(url.to_string()))
+        } else {
+          None
         },
-      )
-      .await
-    {
-      Ok(url) => {
-        let mut proto = CanonicalizeResponse::default();
-        if let Some(url) = url {
-          proto.result =
-            Some(canonicalize_response::Result::Url(url.to_string()));
-        };
-        Ok(proto)
-      }
-      Err(e) => Ok(CanonicalizeResponse {
+      },
+      Err(e) => CanonicalizeResponse {
+        id: request.id,
         result: Some(canonicalize_response::Result::Error(e.to_string())),
-        ..Default::default()
-      }),
+      },
     }
   }
 
   /// Handles an import request.
-  pub async fn import(
-    &self,
-    request: &ImportRequest,
-  ) -> Result<ImportResponse> {
-    let importer =
-      self
-        .importers_by_id
-        .get(&request.importer_id)
-        .ok_or_else(|| {
-          Error::Compile("Unknown ImportRequest.importer_id".to_string())
-        })?;
-    match importer.load(&Url::parse(&request.url).unwrap()).await {
-      Ok(result) => {
-        let mut proto = ImportResponse::default();
-        if let Some(result) = result {
-          let mut success = import_response::ImportSuccess {
+  pub fn import(&self, request: &ImportRequest) -> ImportResponse {
+    let importer = self.importers_by_id.get(&request.importer_id).unwrap();
+    match importer.load(&Url::parse(&request.url).unwrap()) {
+      Ok(result) => ImportResponse {
+        id: request.id,
+        result: if let Some(result) = result {
+          Some(import_response::Result::Success(ImportSuccess {
             contents: result.contents,
-            ..Default::default()
-          };
-          success.set_syntax(result.syntax);
-          if let Some(source_map_url) = result.source_map_url {
-            success.source_map_url = source_map_url;
-          }
-          proto.result = Some(import_response::Result::Success(success));
-        };
-        Ok(proto)
-      }
-      Err(e) => Ok(ImportResponse {
+            syntax: result.syntax as i32,
+            source_map_url: result.source_map_url.unwrap_or_default(),
+          }))
+        } else {
+          None
+        },
+      },
+      Err(e) => ImportResponse {
+        id: request.id,
         result: Some(import_response::Result::Error(e.to_string())),
-        ..Default::default()
-      }),
+      },
     }
   }
 
   /// Handles a file import request.
-  pub async fn file_import(
-    &self,
-    request: &FileImportRequest,
-  ) -> Result<FileImportResponse> {
-    let importer = self
-      .file_importers_by_id
-      .get(&request.importer_id)
-      .ok_or_else(|| {
-        Error::Compile("Unknown FileImportRequest.importer_id".to_string())
-      })?;
-    match importer
-      .find_file_url(
-        &request.url,
-        &ImporterOptions {
-          from_import: request.from_import,
-        },
-      )
-      .await
-    {
-      Ok(url) => {
-        let mut proto = FileImportResponse::default();
-        if let Some(url) = url {
+  pub fn file_import(&self, request: &FileImportRequest) -> FileImportResponse {
+    let importer = self.file_importers_by_id.get(&request.importer_id).unwrap();
+    match importer.find_file_url(
+      &request.url,
+      &ImporterOptions {
+        from_import: request.from_import,
+      },
+    ) {
+      Ok(url) => FileImportResponse {
+        id: request.id,
+        result: if let Some(url) = url {
           if url.scheme() != "file" {
-            return Err(Error::Host(format!(
+            panic!(
               "FileImporter {:?} returned non-file: URL {} for URL {}.",
               importer, url, request.url
-            )));
+            );
           }
-          proto.result =
-            Some(file_import_response::Result::FileUrl(url.to_string()));
-        };
-        Ok(proto)
-      }
-      Err(e) => Ok(FileImportResponse {
+          Some(file_import_response::Result::FileUrl(url.to_string()))
+        } else {
+          None
+        },
+      },
+      Err(e) => FileImportResponse {
+        id: request.id,
         result: Some(file_import_response::Result::Error(e.to_string())),
-        ..Default::default()
-      }),
+      },
     }
   }
 }

@@ -1,142 +1,118 @@
-use std::sync::Mutex;
-
-use prost::Message;
-use tokio::{io::AsyncWriteExt, process::ChildStdin};
+use dashmap::DashMap;
+use parking_lot::Mutex;
+use std::sync::Arc;
 
 use crate::{
+  compiler::Compiler,
+  connection::{Connected, ConnectedGuard, Connection, Unconnected},
   importer_registry::ImporterRegistry,
   logger_registry::LoggerRegistry,
-  pb::{
-    inbound_message::{self, CompileRequest},
-    outbound_message::{self, CompileResponse},
-    InboundMessage,
-  },
-  request_tracker::RequestTracker,
-  Error, Result,
+  protocol::{outbound_message, InboundMessage, OutboundMessage},
 };
 
-pub struct Dispatcher<'i, 'l> {
-  importers: &'i ImporterRegistry,
-  logger: &'l LoggerRegistry,
-  stdin: Mutex<ChildStdin>,
-  pending_inbound_requests: RequestTracker,
-  pending_outbound_requests: RequestTracker,
+#[derive(Debug)]
+pub struct Dispatcher {
+  compiler: Compiler,
+  observers: DashMap<u32, Arc<Connection<Connected>>>,
+  id: Mutex<u32>,
 }
 
-impl<'i, 'l> Dispatcher<'i, 'l> {
-  pub fn new(
-    stdin: ChildStdin,
-    importers: &'i ImporterRegistry,
-    logger: &'l LoggerRegistry,
-  ) -> Self {
-    Self {
-      importers,
-      logger,
-      stdin: Mutex::new(stdin),
-      pending_inbound_requests: RequestTracker::new(),
-      pending_outbound_requests: RequestTracker::new(),
+impl Dispatcher {
+  const PROTOCOL_ERROR_ID: u32 = 0xffffffff; // u32::MAX
+
+  pub fn new(compiler: Compiler) -> Arc<Dispatcher> {
+    let this = Arc::new(Self {
+      compiler,
+      observers: DashMap::new(),
+      id: Mutex::new(0),
+    });
+    Self::spawn(Arc::clone(&this));
+    this
+  }
+
+  fn spawn(dispatcher: Arc<Dispatcher>) {
+    std::thread::spawn(move || loop {
+      dispatcher.receive_message(dispatcher.compiler.read());
+    });
+  }
+
+  pub fn subscribe(
+    &self,
+    observer: Connection<Unconnected>,
+    logger_registry: Option<LoggerRegistry>,
+    importer_registry: Option<ImporterRegistry>,
+  ) -> Result<
+    ConnectedGuard,
+    (
+      Connection<Unconnected>,
+      Option<LoggerRegistry>,
+      Option<ImporterRegistry>,
+    ),
+  > {
+    let mut id = self.id.lock();
+    if *id == Self::PROTOCOL_ERROR_ID {
+      return Err((observer, logger_registry, importer_registry));
     }
+    let observer = observer.connect(*id, logger_registry, importer_registry);
+    self.observers.insert(*id, Arc::clone(&observer.0));
+    *id += 1;
+    Ok(observer)
   }
 
-  pub async fn send_compile_request(
-    &mut self,
-    request: CompileRequest,
-  ) -> Result<()> {
-    let id = self.pending_inbound_requests.next_id();
-    self
-      .send_inbound_message(
-        id,
-        inbound_message::Message::CompileRequest(request),
-      )
-      .await
+  pub fn unsubscribe(&self, id: &u32) {
+    self.observers.remove(&id);
   }
 
-  async fn send_inbound_message(
-    &self,
-    id: u32,
-    mut message: inbound_message::Message,
-  ) -> Result<()> {
-    match &mut message {
-      inbound_message::Message::CompileRequest(request) => {
-        request.id = id;
-        self.pending_inbound_requests.add(id);
-      }
-      inbound_message::Message::CanonicalizeResponse(response) => {
-        response.id = id;
-        self.pending_outbound_requests.resolve(id);
-      }
-      inbound_message::Message::ImportResponse(response) => {
-        response.id = id;
-        self.pending_outbound_requests.resolve(id);
-      }
-      inbound_message::Message::FileImportResponse(response) => {
-        response.id = id;
-        self.pending_outbound_requests.resolve(id);
-      }
-      inbound_message::Message::FunctionCallResponse(response) => {
-        response.id = id;
-        self.pending_outbound_requests.resolve(id);
-      }
-      inbound_message::Message::VersionRequest(_) => unreachable!(),
-    };
-    let inbound = InboundMessage::new(message);
-    let buf = inbound.encode_length_delimited_to_vec();
-    self.stdin.lock().unwrap().write_all(&buf).await?;
-    Ok(())
+  pub fn send_message(&self, inbound_message: InboundMessage) {
+    self.compiler.write(inbound_message);
   }
 
-  pub async fn handle_outbound_message(
-    &self,
-    message: outbound_message::Message,
-  ) -> Result<Option<CompileResponse>> {
-    match message {
-      outbound_message::Message::CompileResponse(response) => {
-        self.pending_inbound_requests.resolve(response.id);
-        Ok(Some(response))
+  fn receive_message(&self, outbound_message: OutboundMessage) {
+    let oneof = outbound_message.message.unwrap();
+    match oneof {
+      outbound_message::Message::Error(e) => {
+        *self.id.lock() = Self::PROTOCOL_ERROR_ID;
+        if e.id == Self::PROTOCOL_ERROR_ID {
+          for ob in self.observers.iter() {
+            ob.error(e.clone());
+          }
+        } else {
+          if let Some(ob) = self.observers.get(&e.id) {
+            ob.error(e);
+          }
+        }
       }
-      outbound_message::Message::CanonicalizeRequest(request) => {
-        self.pending_outbound_requests.add(request.id);
-        let response = self.importers.canonicalize(&request).await?;
-        self
-          .send_inbound_message(
-            request.id,
-            inbound_message::Message::CanonicalizeResponse(response),
-          )
-          .await?;
-        Ok(None)
+      outbound_message::Message::CompileResponse(e) => {
+        if let Some(ob) = self.observers.get(&e.id) {
+          ob.compile_response(e);
+        }
       }
-      outbound_message::Message::ImportRequest(request) => {
-        self.pending_outbound_requests.add(request.id);
-        let response = self.importers.import(&request).await?;
-        self
-          .send_inbound_message(
-            request.id,
-            inbound_message::Message::ImportResponse(response),
-          )
-          .await?;
-        Ok(None)
+      outbound_message::Message::VersionResponse(e) => {
+        if let Some(ob) = self.observers.get(&e.id) {
+          ob.version_response(e);
+        }
       }
-      outbound_message::Message::FileImportRequest(request) => {
-        self.pending_outbound_requests.add(request.id);
-        let response = self.importers.file_import(&request).await?;
-        self
-          .send_inbound_message(
-            request.id,
-            inbound_message::Message::FileImportResponse(response),
-          )
-          .await?;
-        Ok(None)
-      }
-      outbound_message::Message::FunctionCallRequest(request) => {
-        self.pending_outbound_requests.add(request.id);
-        unimplemented!("Not supported yet");
-      }
-      outbound_message::Message::Error(e) => Err(Error::Host(e.message)),
       outbound_message::Message::LogEvent(e) => {
-        self.logger.log(e);
-        Ok(None)
+        if let Some(ob) = self.observers.get(&e.compilation_id) {
+          ob.log_event(e);
+        }
       }
-      outbound_message::Message::VersionResponse(_) => unreachable!(),
+      outbound_message::Message::CanonicalizeRequest(e) => {
+        if let Some(ob) = self.observers.get(&e.compilation_id) {
+          ob.canonicalize_request(e);
+        }
+      }
+      outbound_message::Message::ImportRequest(e) => {
+        if let Some(ob) = self.observers.get(&e.compilation_id) {
+          ob.import_request(e);
+        }
+      }
+      outbound_message::Message::FileImportRequest(e) => {
+        if let Some(ob) = self.observers.get(&e.compilation_id) {
+          ob.file_import_request(e);
+        }
+      }
+      outbound_message::Message::FunctionCallRequest(_) => todo!(),
     }
   }
 }

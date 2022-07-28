@@ -1,38 +1,70 @@
-use crate::api::Exception;
+use std::fmt::Display;
 
-pub type Result<T> = std::result::Result<T, Error>;
+use crate::protocol::{
+  outbound_message::compile_response::CompileFailure, ProtocolError, SourceSpan,
+};
+
+pub type Result<T> = std::result::Result<T, Exception>;
 
 #[derive(Debug)]
-pub enum Error {
-  Compile(String),
-  Host(String),
-  Value(String),
-  SassException(Exception),
-  IO(std::io::Error),
+pub struct Exception {
+  message: String,
+  sass_message: Option<String>,
+  sass_stack: Option<String>,
+  span: Option<SourceSpan>,
 }
 
-impl std::error::Error for Error {}
+impl Exception {
+  pub fn message(&self) -> &str {
+    &self.message
+  }
 
-impl std::fmt::Display for Error {
+  pub fn sass_message(&self) -> Option<&str> {
+    self.sass_message.as_deref()
+  }
+
+  pub fn sass_stack(&self) -> Option<&str> {
+    self.sass_stack.as_deref()
+  }
+
+  pub fn span(&self) -> Option<&SourceSpan> {
+    self.span.as_ref()
+  }
+}
+
+impl std::error::Error for Exception {}
+
+impl Display for Exception {
+  /// https://sass-lang.com/documentation/js-api/classes/Exception#toString
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      Error::Compile(m) => write!(f, "Compiler caused error: {}", m),
-      Error::Host(m) => write!(f, "Compiler reported error: {}", m),
-      Error::Value(m) => write!(f, "{}", m),
-      Error::SassException(e) => write!(f, "{}", e),
-      Error::IO(e) => write!(f, "{}", e),
+    write!(f, "{}", self.message)
+  }
+}
+
+impl From<CompileFailure> for Exception {
+  fn from(failure: CompileFailure) -> Self {
+    Self {
+      message: failure.formatted,
+      sass_message: Some(failure.message),
+      sass_stack: Some(failure.stack_trace),
+      span: failure.span,
     }
   }
 }
 
-impl From<std::io::Error> for Error {
-  fn from(e: std::io::Error) -> Self {
-    Error::IO(e)
+impl From<ProtocolError> for Exception {
+  fn from(e: ProtocolError) -> Self {
+    Self::new(e.message)
   }
 }
 
-impl From<Exception> for Error {
-  fn from(e: Exception) -> Self {
-    Error::SassException(e)
+impl Exception {
+  pub fn new(message: String) -> Self {
+    Self {
+      message,
+      sass_message: None,
+      sass_stack: None,
+      span: None,
+    }
   }
 }
