@@ -6,11 +6,11 @@ fn main() {
   println!("cargo:rerun-if-changed=build.rs");
   println!("cargo:rerun-if-changed=embedded_sass.proto");
   Config::new()
-    .out_dir("src/pb")
+    .out_dir("src/protocol")
     .compile_protos(&["embedded_sass.proto"], &["."])
     .unwrap();
   Command::new("rustfmt")
-    .arg("./src/pb/sass.embedded_protocol.rs")
+    .arg("./src/protocol/sass.embedded_protocol.rs")
     .spawn()
     .unwrap();
 }

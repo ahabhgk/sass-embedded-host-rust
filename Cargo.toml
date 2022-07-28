@@ -11,17 +11,6 @@ parking_lot = "0.12"
 dashmap = "5"
 crossbeam-channel = "0.5"
 
-async-trait = "0.1"
-futures = "0.3"
-tokio = { version = "1", features = [
-  "io-util",
-  "process",
-  "macros",
-  "rt",
-  "rt-multi-thread",
-] }
-tokio-stream = "0.1"
-tokio-util = { version = "0.7", features = ["io"] }
 
 [build-dependencies]
 prost-build = "0.10"
