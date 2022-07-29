@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use url::Url;
-
 use crate::{
   options::{FileImporter, Importer, ImporterOptions, SassImporter},
   protocol::{
@@ -12,14 +10,13 @@ use crate::{
     },
     outbound_message::{CanonicalizeRequest, FileImportRequest, ImportRequest},
   },
+  Url,
 };
 
 /// A registry of importers defined in the host that can be invoked by the
 /// compiler.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ImporterRegistry {
-  /// Protocol buffer representations of the registered importers.
-  importers: Vec<compile_request::Importer>,
   /// The next ID to use for an importer.
   id: u32,
   /// A map from importer IDs to their corresponding importers.
@@ -29,32 +26,32 @@ pub struct ImporterRegistry {
 }
 
 impl ImporterRegistry {
-  pub fn new(
-    importers: Option<Vec<SassImporter>>,
-    load_paths: Option<Vec<String>>,
-  ) -> Self {
-    let mut this = Self {
-      importers: Vec::new(),
-      id: 0,
-      importers_by_id: HashMap::new(),
-      file_importers_by_id: HashMap::new(),
-    };
-    let mut importers: Vec<compile_request::Importer> = importers
-      .unwrap_or_default()
-      .into_iter()
-      .map(|importer| this.register(importer))
-      .collect();
-    importers.extend(load_paths.unwrap_or_default().into_iter().map(|p| {
-      let i = compile_request::importer::Importer::Path(p);
-      compile_request::Importer { importer: Some(i) }
-    }));
-    this.importers = importers;
-    this
+  pub fn register_all(
+    &mut self,
+    importers: Vec<SassImporter>,
+    load_paths: Vec<String>,
+  ) -> impl Iterator<Item = compile_request::Importer> + '_ {
+    let load_paths: Vec<_> = self.register_load_paths(load_paths).collect();
+    self.register_importers(importers).chain(load_paths)
   }
 
-  /// Get all protofied importers.
-  pub fn importers(&self) -> Vec<compile_request::Importer> {
-    self.importers.clone()
+  fn register_importers(
+    &mut self,
+    importers: Vec<SassImporter>,
+  ) -> impl Iterator<Item = compile_request::Importer> + '_ {
+    importers
+      .into_iter()
+      .map(|importer| self.register(importer))
+  }
+
+  fn register_load_paths(
+    &self,
+    load_paths: Vec<String>,
+  ) -> impl Iterator<Item = compile_request::Importer> + '_ {
+    load_paths.into_iter().map(|p| {
+      let i = compile_request::importer::Importer::Path(p);
+      compile_request::Importer { importer: Some(i) }
+    })
   }
 
   /// Converts an importer to a proto.

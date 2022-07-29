@@ -173,7 +173,7 @@ impl OptionsBuilder {
 
 #[derive(Debug, Default)]
 pub struct StringOptions {
-  pub options: Options,
+  pub common: Options,
   /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#importer
   pub importer: Option<SassImporter>,
   /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#syntax
@@ -200,7 +200,7 @@ impl StringOptionsBuilder {
 
   pub fn build(self) -> StringOptions {
     StringOptions {
-      options: self.options,
+      common: self.options,
       importer: self.importer,
       syntax: self.syntax,
       url: self.url,

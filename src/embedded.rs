@@ -2,16 +2,19 @@ use std::ffi::OsStr;
 
 use crate::{
   channel::Channel,
-  importer_registry::ImporterRegistry,
-  logger_registry::LoggerRegistry,
+  host::ImporterRegistry,
+  host::{Host, LoggerRegistry},
   protocol::{
-    inbound_message::{compile_request::Input, CompileRequest},
+    inbound_message::{
+      compile_request::{Input, StringInput},
+      CompileRequest,
+    },
     outbound_message::{
       compile_response::{self, CompileSuccess},
       CompileResponse,
     },
   },
-  Exception, Options, Result,
+  Exception, Options, Result, StringOptions,
 };
 
 #[derive(Debug)]
@@ -29,13 +32,17 @@ impl Embedded {
   pub fn compile(
     &mut self,
     path: impl Into<String>,
-    mut options: Options,
+    options: Options,
   ) -> Result<CompileResult> {
-    let logger_registry = LoggerRegistry::new(options.logger.take());
-    let importer_registry = ImporterRegistry::new(
-      options.importers.take(),
-      options.load_paths.take(),
-    );
+    let mut logger_registry = LoggerRegistry::default();
+    let mut importer_registry = ImporterRegistry::default();
+    let importers = importer_registry
+      .register_all(
+        options.importers.unwrap_or_default(),
+        options.load_paths.unwrap_or_default(),
+      )
+      .collect();
+    options.logger.map(|l| logger_registry.register(l));
 
     let request = CompileRequest {
       style: options.style as i32,
@@ -46,20 +53,66 @@ impl Embedded {
       quiet_deps: options.quiet_deps,
       source_map_include_sources: options.source_map_include_sources,
       charset: options.charset,
-      importers: importer_registry.importers(),
+      importers,
       input: Some(Input::Path(path.into())),
+      // id: set in compile_request
+      // global_functions: not implemented
       ..Default::default()
     };
 
-    let conn = self
-      .channel
-      .connect(Some(logger_registry), Some(importer_registry));
+    let host = Host::new(importer_registry, logger_registry);
+    let conn = self.channel.connect(host);
+    let response = conn.compile_request(request)?;
+    Ok(CompileResult::try_from(response)?)
+  }
+
+  pub fn compile_string(
+    &mut self,
+    source: impl Into<String>,
+    options: StringOptions,
+  ) -> Result<CompileResult> {
+    let mut logger_registry = LoggerRegistry::default();
+    let mut importer_registry = ImporterRegistry::default();
+    let importers = importer_registry
+      .register_all(
+        options.common.importers.unwrap_or_default(),
+        options.common.load_paths.unwrap_or_default(),
+      )
+      .collect();
+    options.common.logger.map(|l| logger_registry.register(l));
+
+    let request = CompileRequest {
+      style: options.common.style as i32,
+      source_map: options.common.source_map,
+      alert_color: options.common.alert_color,
+      alert_ascii: options.common.alert_ascii,
+      verbose: options.common.verbose,
+      quiet_deps: options.common.quiet_deps,
+      source_map_include_sources: options.common.source_map_include_sources,
+      charset: options.common.charset,
+      importers,
+      input: Some(Input::String(StringInput {
+        source: source.into(),
+        url: options.url.map(|url| url.to_string()).unwrap_or_default(),
+        syntax: options.syntax as i32,
+        importer: options.importer.map(|i| importer_registry.register(i)),
+      })),
+      // id: set in compile_request
+      // global_functions: not implemented
+      ..Default::default()
+    };
+
+    let host = Host::new(importer_registry, logger_registry);
+    let conn = self.channel.connect(host);
     let response = conn.compile_request(request)?;
     Ok(CompileResult::try_from(response)?)
   }
 
   pub fn info(&mut self) -> Result<String> {
-    let conn = self.channel.connect(None, None);
+    let logger_registry = LoggerRegistry::default();
+    let importer_registry = ImporterRegistry::default();
+    let host = Host::new(importer_registry, logger_registry);
+    let conn = self.channel.connect(host);
     let response = conn.version_request()?;
     Ok(format!(
       "sass-embedded\t#{}",

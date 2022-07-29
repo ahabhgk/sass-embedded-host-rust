@@ -7,8 +7,7 @@ use crate::{
   compiler::Compiler,
   connection::{ConnectedGuard, Connection},
   dispatcher::Dispatcher,
-  importer_registry::ImporterRegistry,
-  logger_registry::LoggerRegistry,
+  host::Host,
 };
 
 #[derive(Debug)]
@@ -25,23 +24,13 @@ impl Channel {
     Self { path, dispatcher }
   }
 
-  pub fn connect(
-    &mut self,
-    logger_registry: Option<LoggerRegistry>,
-    importer_registry: Option<ImporterRegistry>,
-  ) -> ConnectedGuard {
+  pub fn connect(&mut self, host: Host) -> ConnectedGuard {
     let conn = Connection::new(Arc::clone(&self.dispatcher));
-    match self
-      .dispatcher
-      .subscribe(conn, logger_registry, importer_registry)
-    {
-      Err((conn, logger_registry, importer_registry)) => {
+    match self.dispatcher.subscribe(conn, host) {
+      Err((conn, host)) => {
         let compiler = Compiler::new(&self.path);
         self.dispatcher = Dispatcher::new(compiler);
-        self
-          .dispatcher
-          .subscribe(conn, logger_registry, importer_registry)
-          .unwrap()
+        self.dispatcher.subscribe(conn, host).unwrap()
       }
       Ok(conn) => conn,
     }

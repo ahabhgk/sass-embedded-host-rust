@@ -4,8 +4,7 @@ use crossbeam_channel::{Receiver, Sender};
 
 use crate::{
   dispatcher::Dispatcher,
-  importer_registry::ImporterRegistry,
-  logger_registry::LoggerRegistry,
+  host::Host,
   protocol::{
     inbound_message::{self, CompileRequest, VersionRequest},
     outbound_message::{
@@ -28,6 +27,7 @@ pub struct Connected {
   id: u32,
   tx: Sender<Response>,
   rx: Receiver<Response>,
+  host: Host,
 }
 
 #[derive(Debug)]
@@ -36,8 +36,6 @@ pub struct Unconnected;
 pub struct Connection<S: Debug> {
   state: S,
   dispatcher: Arc<Dispatcher>,
-  logger_registry: Option<LoggerRegistry>,
-  importer_registry: Option<ImporterRegistry>,
 }
 
 impl<S: Debug> Debug for Connection<S> {
@@ -67,23 +65,14 @@ impl Connection<Unconnected> {
     Self {
       state: Unconnected,
       dispatcher,
-      logger_registry: None,
-      importer_registry: None,
     }
   }
 
-  pub fn connect(
-    self,
-    id: u32,
-    logger_registry: Option<LoggerRegistry>,
-    importer_registry: Option<ImporterRegistry>,
-  ) -> ConnectedGuard {
+  pub fn connect(self, id: u32, host: Host) -> ConnectedGuard {
     let (tx, rx) = crossbeam_channel::bounded(1);
     ConnectedGuard(Arc::new(Connection {
-      state: Connected { id, tx, rx },
+      state: Connected { id, tx, rx, host },
       dispatcher: self.dispatcher,
-      logger_registry,
-      importer_registry,
     }))
   }
 }
@@ -110,39 +99,31 @@ impl Connection<Connected> {
   }
 
   pub fn log_event(&self, e: LogEvent) {
-    if let Some(logger_registry) = &self.logger_registry {
-      logger_registry.log(e)
-    }
+    self.state.host.log(e);
   }
 
   pub fn canonicalize_request(&self, e: CanonicalizeRequest) {
-    if let Some(importer_registry) = &self.importer_registry {
-      self.send_message(InboundMessage {
-        message: Some(inbound_message::Message::CanonicalizeResponse(
-          importer_registry.canonicalize(&e),
-        )),
-      });
-    }
+    self.send_message(InboundMessage {
+      message: Some(inbound_message::Message::CanonicalizeResponse(
+        self.state.host.canonicalize(&e),
+      )),
+    });
   }
 
   pub fn import_request(&self, e: ImportRequest) {
-    if let Some(importer_registry) = &self.importer_registry {
-      self.send_message(InboundMessage {
-        message: Some(inbound_message::Message::ImportResponse(
-          importer_registry.import(&e),
-        )),
-      });
-    }
+    self.send_message(InboundMessage {
+      message: Some(inbound_message::Message::ImportResponse(
+        self.state.host.import(&e),
+      )),
+    });
   }
 
   pub fn file_import_request(&self, e: FileImportRequest) {
-    if let Some(importer_registry) = &self.importer_registry {
-      self.send_message(InboundMessage {
-        message: Some(inbound_message::Message::FileImportResponse(
-          importer_registry.file_import(&e),
-        )),
-      });
-    }
+    self.send_message(InboundMessage {
+      message: Some(inbound_message::Message::FileImportResponse(
+        self.state.host.file_import(&e),
+      )),
+    });
   }
 
   pub fn compile_request(

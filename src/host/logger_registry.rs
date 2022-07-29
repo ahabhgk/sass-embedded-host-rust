@@ -3,14 +3,14 @@ use crate::{
   LoggerDebugOptions, LoggerWarnOptions, SassLogger,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct LoggerRegistry {
   logger: Option<SassLogger>,
 }
 
 impl LoggerRegistry {
-  pub fn new(logger: Option<SassLogger>) -> Self {
-    Self { logger }
+  pub fn register(&mut self, logger: SassLogger) {
+    self.logger = Some(logger);
   }
 
   pub fn log(&self, event: LogEvent) {

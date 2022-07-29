@@ -4,8 +4,7 @@ mod connection;
 mod dispatcher;
 mod embedded;
 mod error;
-mod importer_registry;
-mod logger_registry;
+mod host;
 mod options;
 mod protocol;
 mod varint;
@@ -16,7 +15,7 @@ pub use options::{
   FileImporter, Importer, Logger, LoggerDebugOptions, LoggerWarnOptions,
   Options, OptionsBuilder, SassLogger, StringOptions, StringOptionsBuilder,
 };
-pub use protocol::{OutputStyle, Syntax};
+pub use protocol::{OutputStyle, SourceSpan, Syntax};
 pub use url::{self, Url};
 
 #[cfg(test)]

@@ -5,8 +5,7 @@ use std::sync::Arc;
 use crate::{
   compiler::Compiler,
   connection::{Connected, ConnectedGuard, Connection, Unconnected},
-  importer_registry::ImporterRegistry,
-  logger_registry::LoggerRegistry,
+  host::{Host},
   protocol::{outbound_message, InboundMessage, OutboundMessage},
 };
 
@@ -39,21 +38,13 @@ impl Dispatcher {
   pub fn subscribe(
     &self,
     observer: Connection<Unconnected>,
-    logger_registry: Option<LoggerRegistry>,
-    importer_registry: Option<ImporterRegistry>,
-  ) -> Result<
-    ConnectedGuard,
-    (
-      Connection<Unconnected>,
-      Option<LoggerRegistry>,
-      Option<ImporterRegistry>,
-    ),
-  > {
+    host: Host,
+  ) -> Result<ConnectedGuard, (Connection<Unconnected>, Host)> {
     let mut id = self.id.lock();
     if *id == Self::PROTOCOL_ERROR_ID {
-      return Err((observer, logger_registry, importer_registry));
+      return Err((observer, host));
     }
-    let observer = observer.connect(*id, logger_registry, importer_registry);
+    let observer = observer.connect(*id, host);
     self.observers.insert(*id, Arc::clone(&observer.0));
     *id += 1;
     Ok(observer)
