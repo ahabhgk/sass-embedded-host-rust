@@ -1,5 +1,7 @@
 use std::ffi::OsStr;
 
+use atty::Stream;
+
 use crate::{
   channel::Channel,
   host::ImporterRegistry,
@@ -47,7 +49,7 @@ impl Embedded {
     let request = CompileRequest {
       style: options.style as i32,
       source_map: options.source_map,
-      alert_color: options.alert_color,
+      alert_color: options.alert_color.unwrap_or(atty::is(Stream::Stdout)),
       alert_ascii: options.alert_ascii,
       verbose: options.verbose,
       quiet_deps: options.quiet_deps,
@@ -84,7 +86,10 @@ impl Embedded {
     let request = CompileRequest {
       style: options.common.style as i32,
       source_map: options.common.source_map,
-      alert_color: options.common.alert_color,
+      alert_color: options
+        .common
+        .alert_color
+        .unwrap_or(atty::is(Stream::Stdout)),
       alert_ascii: options.common.alert_ascii,
       verbose: options.common.verbose,
       quiet_deps: options.common.quiet_deps,

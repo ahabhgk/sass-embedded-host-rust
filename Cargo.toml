@@ -6,11 +6,11 @@ edition = "2021"
 [dependencies]
 prost = "0.10"
 url = "2"
-supports-color = "1"
+atty = "0.2"
 parking_lot = "0.12"
 dashmap = "5"
 crossbeam-channel = "0.5"
-
+rustc-hash = "1"
 
 [build-dependencies]
 prost-build = "0.10"

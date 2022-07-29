@@ -1,10 +1,8 @@
 use std::fmt::Debug;
 
-use url::Url;
-
 use crate::{
   protocol::{OutputStyle, SourceSpan, Syntax},
-  Result,
+  Result, Url,
 };
 
 /// https://sass-lang.com/documentation/js-api/interfaces/Options
@@ -13,7 +11,7 @@ pub struct Options {
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#alertAscii
   pub alert_ascii: bool,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#alertColor
-  pub alert_color: bool,
+  pub alert_color: Option<bool>,
   // /// https://sass-lang.com/documentation/js-api/interfaces/Options#functions
   // pub functions
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#importers
@@ -40,7 +38,7 @@ impl Default for Options {
   fn default() -> Self {
     Self {
       alert_ascii: false,
-      alert_color: false,
+      alert_color: None,
       load_paths: None,
       importers: None,
       logger: None,
@@ -74,7 +72,7 @@ impl OptionsBuilder {
   }
 
   pub fn alert_color(mut self, arg: bool) -> Self {
-    self.options.alert_color = arg;
+    self.options.alert_color = Some(arg);
     self
   }
 
@@ -241,7 +239,7 @@ impl StringOptionsBuilder {
   }
 
   pub fn alert_color(mut self, arg: bool) -> Self {
-    self.options.alert_color = arg;
+    self.options.alert_color = Some(arg);
     self
   }
 

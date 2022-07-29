@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use crate::{
   options::{FileImporter, Importer, ImporterOptions, SassImporter},
@@ -20,9 +20,9 @@ pub struct ImporterRegistry {
   /// The next ID to use for an importer.
   id: u32,
   /// A map from importer IDs to their corresponding importers.
-  importers_by_id: HashMap<u32, Box<dyn Importer>>,
+  importers_by_id: FxHashMap<u32, Box<dyn Importer>>,
   /// A map from file importer IDs to their corresponding importers.
-  file_importers_by_id: HashMap<u32, Box<dyn FileImporter>>,
+  file_importers_by_id: FxHashMap<u32, Box<dyn FileImporter>>,
 }
 
 impl ImporterRegistry {
