@@ -363,14 +363,14 @@ pub enum SassImporter {
 /// https://sass-lang.com/documentation/js-api/interfaces/Importer
 pub trait Importer: Debug + Send + Sync {
   /// https://sass-lang.com/documentation/js-api/interfaces/Importer#canonicalize
-  fn canonicalize<'u, 'o>(
+  fn canonicalize(
     &self,
-    url: &'u str,
-    options: &'o ImporterOptions,
+    url: &str,
+    options: &ImporterOptions,
   ) -> Result<Option<Url>>;
 
   /// https://sass-lang.com/documentation/js-api/interfaces/Importer#load
-  fn load<'u>(&self, canonical_url: &'u Url) -> Result<Option<ImporterResult>>;
+  fn load(&self, canonical_url: &Url) -> Result<Option<ImporterResult>>;
 }
 
 pub struct ImporterOptions {
@@ -380,10 +380,10 @@ pub struct ImporterOptions {
 /// https://sass-lang.com/documentation/js-api/interfaces/FileImporter
 pub trait FileImporter: Debug + Send + Sync {
   /// https://sass-lang.com/documentation/js-api/interfaces/FileImporter#findFileUrl
-  fn find_file_url<'u, 'o>(
+  fn find_file_url(
     &self,
-    url: &'u str,
-    options: &'o ImporterOptions,
+    url: &str,
+    options: &ImporterOptions,
   ) -> Result<Option<Url>>;
 }
 

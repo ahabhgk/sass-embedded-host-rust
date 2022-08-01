@@ -44,12 +44,16 @@ impl Embedded {
         options.load_paths.unwrap_or_default(),
       )
       .collect();
-    options.logger.map(|l| logger_registry.register(l));
+    if let Some(l) = options.logger {
+      logger_registry.register(l);
+    }
 
     let request = CompileRequest {
       style: options.style as i32,
       source_map: options.source_map,
-      alert_color: options.alert_color.unwrap_or(atty::is(Stream::Stdout)),
+      alert_color: options
+        .alert_color
+        .unwrap_or_else(|| atty::is(Stream::Stdout)),
       alert_ascii: options.alert_ascii,
       verbose: options.verbose,
       quiet_deps: options.quiet_deps,
@@ -65,7 +69,7 @@ impl Embedded {
     let host = Host::new(importer_registry, logger_registry);
     let conn = self.channel.connect(host);
     let response = conn.compile_request(request)?;
-    Ok(CompileResult::try_from(response)?)
+    CompileResult::try_from(response)
   }
 
   pub fn compile_string(
@@ -81,7 +85,9 @@ impl Embedded {
         options.common.load_paths.unwrap_or_default(),
       )
       .collect();
-    options.common.logger.map(|l| logger_registry.register(l));
+    if let Some(l) = options.common.logger {
+      logger_registry.register(l);
+    }
 
     let request = CompileRequest {
       style: options.common.style as i32,
@@ -89,7 +95,7 @@ impl Embedded {
       alert_color: options
         .common
         .alert_color
-        .unwrap_or(atty::is(Stream::Stdout)),
+        .unwrap_or_else(|| atty::is(Stream::Stdout)),
       alert_ascii: options.common.alert_ascii,
       verbose: options.common.verbose,
       quiet_deps: options.common.quiet_deps,
@@ -110,7 +116,7 @@ impl Embedded {
     let host = Host::new(importer_registry, logger_registry);
     let conn = self.channel.connect(host);
     let response = conn.compile_request(request)?;
-    Ok(CompileResult::try_from(response)?)
+    CompileResult::try_from(response)
   }
 
   pub fn info(&mut self) -> Result<String> {

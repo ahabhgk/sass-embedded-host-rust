@@ -87,11 +87,8 @@ impl ImporterRegistry {
     ) {
       Ok(url) => CanonicalizeResponse {
         id: request.id,
-        result: if let Some(url) = url {
-          Some(canonicalize_response::Result::Url(url.to_string()))
-        } else {
-          None
-        },
+        result: url
+          .map(|url| canonicalize_response::Result::Url(url.to_string())),
       },
       Err(e) => CanonicalizeResponse {
         id: request.id,

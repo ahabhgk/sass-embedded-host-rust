@@ -4,7 +4,8 @@ use parking_lot::Mutex;
 use sandbox::{Sandbox, ToUrl};
 use sass_embedded_host_rust::{
   Exception, FileImporter, Importer, ImporterOptions, ImporterResult,
-  OptionsBuilder, Result, Sass, StringOptionsBuilder, Syntax, Url,
+  OptionsBuilder, Result, Sass, StringOptions, StringOptionsBuilder, Syntax,
+  Url,
 };
 use serde_json::{json, Value};
 
@@ -20,18 +21,15 @@ fn uses_an_importer_to_resolve_an_at_import() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      url: &'u str,
-      _: &'o ImporterOptions,
+      url: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
     }
 
-    fn load<'u>(
-      &self,
-      canonical_url: &'u Url,
-    ) -> Result<Option<ImporterResult>> {
+    fn load(&self, canonical_url: &Url) -> Result<Option<ImporterResult>> {
       let color = canonical_url.path();
       Ok(Some(ImporterResult {
         contents: format!(".{color} {{color: {color}}}"),
@@ -59,18 +57,15 @@ fn passes_the_canonicalized_url_to_the_importer() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(Url::parse("u:blue").unwrap()))
     }
 
-    fn load<'u>(
-      &self,
-      canonical_url: &'u Url,
-    ) -> Result<Option<ImporterResult>> {
+    fn load(&self, canonical_url: &Url) -> Result<Option<ImporterResult>> {
       let color = canonical_url.path();
       Ok(Some(ImporterResult {
         contents: format!(".{color} {{color: {color}}}"),
@@ -98,18 +93,15 @@ fn only_invokes_the_importer_once_for_a_given_canonicalization() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(Url::parse("u:blue").unwrap()))
     }
 
-    fn load<'u>(
-      &self,
-      canonical_url: &'u Url,
-    ) -> Result<Option<ImporterResult>> {
+    fn load(&self, canonical_url: &Url) -> Result<Option<ImporterResult>> {
       let color = canonical_url.path();
       Ok(Some(ImporterResult {
         contents: format!(".{color} {{color: {color}}}"),
@@ -143,16 +135,16 @@ fn the_imported_url_is_not_changed_if_it_is_root_relative() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      url: &'u str,
-      _: &'o ImporterOptions,
+      url: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       assert_eq!(url, "/orange");
       Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Ok(Some(ImporterResult {
         contents: format!("a {{b: c}}"),
         syntax: Syntax::Scss,
@@ -180,16 +172,16 @@ fn the_imported_url_is_converted_to_a_file_url_if_it_is_an_absolute_windows_path
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      url: &'u str,
-      _: &'o ImporterOptions,
+      url: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       assert_eq!(url, "file:///C:/orange");
       Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Ok(Some(ImporterResult {
         contents: format!("a {{b: c}}"),
         syntax: Syntax::Scss,
@@ -216,18 +208,15 @@ fn uses_an_importer_is_source_map_url() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      url: &'u str,
-      _: &'o ImporterOptions,
+      url: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
     }
 
-    fn load<'u>(
-      &self,
-      canonical_url: &'u Url,
-    ) -> Result<Option<ImporterResult>> {
+    fn load(&self, canonical_url: &Url) -> Result<Option<ImporterResult>> {
       let color = canonical_url.path();
       Ok(Some(ImporterResult {
         contents: format!(".{color} {{color: {color}}}"),
@@ -259,15 +248,15 @@ fn wraps_an_error_in_canonicalize() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Err(Exception::new("this import is bad actually"))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       panic!("load() should not be called")
     }
   }
@@ -291,15 +280,15 @@ fn wraps_an_error_in_load() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      url: &'u str,
-      _: &'o ImporterOptions,
+      url: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Err(Exception::new("this import is bad actually"))
     }
   }
@@ -323,15 +312,15 @@ fn avoids_importer_when_canonicalize_returns_nil() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(None)
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Err(Exception::new("this import is bad actually"))
     }
   }
@@ -358,15 +347,15 @@ fn fails_to_import_when_load_returns_nil() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      url: &'u str,
-      _: &'o ImporterOptions,
+      url: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Ok(None)
     }
   }
@@ -393,15 +382,15 @@ fn prefers_a_relative_file_load_to_an_importer() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       panic!("canonicalize() should not be called");
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       panic!("load() should not be called");
     }
   }
@@ -429,15 +418,15 @@ fn prefers_a_relative_importer_load_to_an_importer() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       panic!("canonicalize() should not be called");
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       panic!("load() should not be called");
     }
   }
@@ -445,15 +434,15 @@ fn prefers_a_relative_importer_load_to_an_importer() {
   struct MyInputImporter;
 
   impl Importer for MyInputImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      url: &'u str,
-      _: &'o ImporterOptions,
+      url: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(Url::parse(url).unwrap()))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Ok(Some(ImporterResult {
         contents: "a {from: relative}".to_string(),
         syntax: Syntax::Scss,
@@ -482,15 +471,15 @@ fn prefers_an_importer_to_a_load_path() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       panic!("canonicalize() should not be called");
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       panic!("load() should not be called");
     }
   }
@@ -518,15 +507,15 @@ fn with_syntax_scss_parses_it_as_scss() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(Url::parse("u:other").unwrap()))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Ok(Some(ImporterResult {
         contents: "$a: value; b {c: $a}".to_string(),
         syntax: Syntax::Scss,
@@ -553,15 +542,15 @@ fn with_syntax_indented_parses_it_as_the_indented_syntax() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(Url::parse("u:other").unwrap()))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Ok(Some(ImporterResult {
         contents: "$a: value\nb\n  c: $a".to_string(),
         syntax: Syntax::Indented,
@@ -588,15 +577,15 @@ fn with_syntax_css_allows_plain_css() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(Url::parse("u:other").unwrap()))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Ok(Some(ImporterResult {
         contents: "a {b: c}".to_string(),
         syntax: Syntax::Css,
@@ -623,15 +612,15 @@ fn with_syntax_css_rejects_scss() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(Url::parse("u:other").unwrap()))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Ok(Some(ImporterResult {
         contents: "$a: value\nb\n  c: $a".to_string(),
         syntax: Syntax::Css,
@@ -658,16 +647,16 @@ fn from_import_is_true_from_an_at_import() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      url: &'u str,
-      options: &'o ImporterOptions,
+      url: &str,
+      options: &ImporterOptions,
     ) -> Result<Option<Url>> {
       assert_eq!(options.from_import, true);
       Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Ok(Some(ImporterResult {
         contents: String::new(),
         syntax: Syntax::Scss,
@@ -693,16 +682,16 @@ fn from_import_is_false_from_an_at_use() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      url: &'u str,
-      options: &'o ImporterOptions,
+      url: &str,
+      options: &ImporterOptions,
     ) -> Result<Option<Url>> {
       assert_eq!(options.from_import, false);
       Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Ok(Some(ImporterResult {
         contents: String::new(),
         syntax: Syntax::Scss,
@@ -728,16 +717,16 @@ fn from_import_is_false_from_an_at_forward() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      url: &'u str,
-      options: &'o ImporterOptions,
+      url: &str,
+      options: &ImporterOptions,
     ) -> Result<Option<Url>> {
       assert_eq!(options.from_import, false);
       Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Ok(Some(ImporterResult {
         contents: String::new(),
         syntax: Syntax::Scss,
@@ -763,16 +752,16 @@ fn from_import_is_false_from_meta_load_css() {
   struct MyImporter;
 
   impl Importer for MyImporter {
-    fn canonicalize<'u, 'o>(
+    fn canonicalize(
       &self,
-      url: &'u str,
-      options: &'o ImporterOptions,
+      url: &str,
+      options: &ImporterOptions,
     ) -> Result<Option<Url>> {
       assert_eq!(options.from_import, false);
       Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
     }
 
-    fn load<'u>(&self, _: &'u Url) -> Result<Option<ImporterResult>> {
+    fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
       Ok(Some(ImporterResult {
         contents: String::new(),
         syntax: Syntax::Scss,
@@ -800,10 +789,10 @@ fn file_importer_loads_a_fully_canonicalized_url() {
   }
 
   impl FileImporter for MyFileImporter {
-    fn find_file_url<'u, 'o>(
+    fn find_file_url(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(self.sandbox.path().join("_other.scss").to_url()))
     }
@@ -834,10 +823,10 @@ fn file_importer_resolves_a_non_canonicalized_url() {
   }
 
   impl FileImporter for MyFileImporter {
-    fn find_file_url<'u, 'o>(
+    fn find_file_url(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(self.sandbox.path().join("other").to_url()))
     }
@@ -866,10 +855,10 @@ fn file_importer_avoids_importer_when_it_returns_nil() {
   struct MyFileImporter;
 
   impl FileImporter for MyFileImporter {
-    fn find_file_url<'u, 'o>(
+    fn find_file_url(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(None)
     }
@@ -899,10 +888,10 @@ fn file_importer_avoids_importer_when_it_returns_an_unresolvable_url() {
   }
 
   impl FileImporter for MyFileImporter {
-    fn find_file_url<'u, 'o>(
+    fn find_file_url(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       Ok(Some(self.sandbox.path().join("nonexistent/other").to_url()))
     }
@@ -934,10 +923,10 @@ fn file_importer_passes_an_absolute_non_file_url_to_the_importer() {
   }
 
   impl FileImporter for MyFileImporter {
-    fn find_file_url<'u, 'o>(
+    fn find_file_url(
       &self,
-      url: &'u str,
-      _: &'o ImporterOptions,
+      url: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       assert_eq!(url, "u:other");
       Ok(Some(self.sandbox.path().join("dir/other").to_url()))
@@ -968,10 +957,10 @@ fn file_importer_does_not_pass_an_absolute_file_url_to_the_importer() {
   struct MyFileImporter;
 
   impl FileImporter for MyFileImporter {
-    fn find_file_url<'u, 'o>(
+    fn find_file_url(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       panic!("find_file_url() should not be called")
     }
@@ -1001,10 +990,10 @@ fn file_importer_does_not_pass_relative_loads_to_the_importer() {
   }
 
   impl FileImporter for MyFileImporter {
-    fn find_file_url<'u, 'o>(
+    fn find_file_url(
       &self,
-      _: &'u str,
-      _: &'o ImporterOptions,
+      _: &str,
+      _: &ImporterOptions,
     ) -> Result<Option<Url>> {
       let mut count = self.count.lock();
       if *count > 0 {
@@ -1026,7 +1015,7 @@ fn file_importer_does_not_pass_relative_loads_to_the_importer() {
   let mut sass = Sass::new(exe_path());
   let res = sass
     .compile_string(
-      "@import \"u:other\";",
+      "@import \"midstream\";",
       StringOptionsBuilder::default()
         .load_path(sandbox.path().to_string_lossy())
         .file_importer(Box::new(MyFileImporter {
@@ -1037,4 +1026,261 @@ fn file_importer_does_not_pass_relative_loads_to_the_importer() {
     )
     .unwrap();
   assert_eq!(res.css, "a {\n  b: c;\n}");
+}
+
+#[test]
+fn file_importer_wraps_an_error() {
+  #[derive(Debug)]
+  struct MyFileImporter;
+
+  impl FileImporter for MyFileImporter {
+    fn find_file_url(
+      &self,
+      _: &str,
+      _: &ImporterOptions,
+    ) -> Result<Option<Url>> {
+      Err(Exception::new("this import is bad actually"))
+    }
+  }
+
+  let mut sass = Sass::new(exe_path());
+  let err = sass
+    .compile_string("@import \"other\";", StringOptions::default())
+    .unwrap_err();
+  assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+}
+
+#[ignore]
+#[test]
+fn file_importer_rejects_a_non_file_url() {
+  #[derive(Debug)]
+  struct MyFileImporter;
+
+  impl FileImporter for MyFileImporter {
+    fn find_file_url(
+      &self,
+      _: &str,
+      _: &ImporterOptions,
+    ) -> Result<Option<Url>> {
+      Ok(Some(Url::parse("u:other.scss").unwrap()))
+    }
+  }
+
+  let mut sass = Sass::new(exe_path());
+  let err = sass
+    .compile_string(
+      "@import \"other\";",
+      StringOptionsBuilder::default()
+        .file_importer(Box::new(MyFileImporter) as Box<dyn FileImporter>)
+        .build(),
+    )
+    .unwrap_err();
+  assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+}
+
+#[test]
+fn file_importer_when_the_resolved_file_has_extension_scss_parses_it_as_scss() {
+  #[derive(Debug)]
+  struct MyFileImporter {
+    sandbox: Sandbox,
+  }
+
+  impl FileImporter for MyFileImporter {
+    fn find_file_url(
+      &self,
+      _: &str,
+      _: &ImporterOptions,
+    ) -> Result<Option<Url>> {
+      Ok(Some(self.sandbox.path().join("other").to_url()))
+    }
+  }
+
+  let sandbox = Sandbox::default();
+  sandbox.write(sandbox.path().join("_other.scss"), "$a: value; b {c: $a}");
+
+  let mut sass = Sass::new(exe_path());
+  let res = sass
+    .compile_string(
+      "@import \"other\";",
+      StringOptionsBuilder::default()
+        .file_importer(
+          Box::new(MyFileImporter { sandbox }) as Box<dyn FileImporter>
+        )
+        .build(),
+    )
+    .unwrap();
+  assert_eq!(res.css, "b {\n  c: value;\n}");
+}
+
+#[test]
+fn file_importer_when_the_resolved_file_has_extension_sass_parses_it_as_the_indented_syntax(
+) {
+  #[derive(Debug)]
+  struct MyFileImporter {
+    sandbox: Sandbox,
+  }
+
+  impl FileImporter for MyFileImporter {
+    fn find_file_url(
+      &self,
+      _: &str,
+      _: &ImporterOptions,
+    ) -> Result<Option<Url>> {
+      Ok(Some(self.sandbox.path().join("other").to_url()))
+    }
+  }
+
+  let sandbox = Sandbox::default();
+  sandbox.write(sandbox.path().join("_other.sass"), "$a: value\nb\n  c: $a");
+
+  let mut sass = Sass::new(exe_path());
+  let res = sass
+    .compile_string(
+      "@import \"other\";",
+      StringOptionsBuilder::default()
+        .file_importer(
+          Box::new(MyFileImporter { sandbox }) as Box<dyn FileImporter>
+        )
+        .build(),
+    )
+    .unwrap();
+  assert_eq!(res.css, "b {\n  c: value;\n}");
+}
+
+#[test]
+fn file_importer_when_the_resolved_file_has_extension_css_allows_plain_css() {
+  #[derive(Debug)]
+  struct MyFileImporter {
+    sandbox: Sandbox,
+  }
+
+  impl FileImporter for MyFileImporter {
+    fn find_file_url(
+      &self,
+      _: &str,
+      _: &ImporterOptions,
+    ) -> Result<Option<Url>> {
+      Ok(Some(self.sandbox.path().join("other").to_url()))
+    }
+  }
+
+  let sandbox = Sandbox::default();
+  sandbox.write(sandbox.path().join("_other.css"), "a {b: c}");
+
+  let mut sass = Sass::new(exe_path());
+  let res = sass
+    .compile_string(
+      "@import \"other\";",
+      StringOptionsBuilder::default()
+        .file_importer(
+          Box::new(MyFileImporter { sandbox }) as Box<dyn FileImporter>
+        )
+        .build(),
+    )
+    .unwrap();
+  assert_eq!(res.css, "a {\n  b: c;\n}");
+}
+
+#[test]
+fn file_importer_when_the_resolved_file_has_extension_css_rejects_scss() {
+  #[derive(Debug)]
+  struct MyFileImporter {
+    sandbox: Sandbox,
+  }
+
+  impl FileImporter for MyFileImporter {
+    fn find_file_url(
+      &self,
+      _: &str,
+      _: &ImporterOptions,
+    ) -> Result<Option<Url>> {
+      Ok(Some(self.sandbox.path().join("other").to_url()))
+    }
+  }
+
+  let sandbox = Sandbox::default();
+  sandbox.write(sandbox.path().join("_other.css"), "$a: value; b {c: $a}");
+  let url = sandbox.path().join("_other.css").to_url();
+
+  let mut sass = Sass::new(exe_path());
+  let err = sass
+    .compile_string(
+      "@import \"other\";",
+      StringOptionsBuilder::default()
+        .file_importer(
+          Box::new(MyFileImporter { sandbox }) as Box<dyn FileImporter>
+        )
+        .build(),
+    )
+    .unwrap_err();
+  assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+  assert_eq!(err.span().unwrap().url, url.to_string());
+}
+
+#[test]
+fn file_importer_from_import_is_true_from_an_at_import() {
+  #[derive(Debug)]
+  struct MyFileImporter {
+    sandbox: Sandbox,
+  }
+
+  impl FileImporter for MyFileImporter {
+    fn find_file_url(
+      &self,
+      _: &str,
+      options: &ImporterOptions,
+    ) -> Result<Option<Url>> {
+      assert_eq!(options.from_import, true);
+      Ok(Some(self.sandbox.path().join("other").to_url()))
+    }
+  }
+
+  let sandbox = Sandbox::default();
+  sandbox.write(sandbox.path().join("_other.css"), "a {b: c}");
+
+  let mut sass = Sass::new(exe_path());
+  let _ = sass
+    .compile_string(
+      "@import \"other\";",
+      StringOptionsBuilder::default()
+        .file_importer(
+          Box::new(MyFileImporter { sandbox }) as Box<dyn FileImporter>
+        )
+        .build(),
+    )
+    .unwrap();
+}
+
+#[test]
+fn file_importer_from_import_is_false_from_an_at_use() {
+  #[derive(Debug)]
+  struct MyFileImporter {
+    sandbox: Sandbox,
+  }
+
+  impl FileImporter for MyFileImporter {
+    fn find_file_url(
+      &self,
+      _: &str,
+      options: &ImporterOptions,
+    ) -> Result<Option<Url>> {
+      assert_eq!(options.from_import, false);
+      Ok(Some(self.sandbox.path().join("other").to_url()))
+    }
+  }
+
+  let sandbox = Sandbox::default();
+  sandbox.write(sandbox.path().join("_other.css"), "a {b: c}");
+
+  let mut sass = Sass::new(exe_path());
+  let _ = sass
+    .compile_string(
+      "@use \"other\";",
+      StringOptionsBuilder::default()
+        .file_importer(
+          Box::new(MyFileImporter { sandbox }) as Box<dyn FileImporter>
+        )
+        .build(),
+    )
+    .unwrap();
 }

@@ -5,7 +5,7 @@ use std::sync::Arc;
 use crate::{
   compiler::Compiler,
   connection::{Connected, ConnectedGuard, Connection, Unconnected},
-  host::{Host},
+  host::Host,
   protocol::{outbound_message, InboundMessage, OutboundMessage},
 };
 
@@ -51,7 +51,7 @@ impl Dispatcher {
   }
 
   pub fn unsubscribe(&self, id: &u32) {
-    self.observers.remove(&id);
+    self.observers.remove(id);
   }
 
   pub fn send_message(&self, inbound_message: InboundMessage) {
@@ -67,10 +67,8 @@ impl Dispatcher {
           for ob in self.observers.iter() {
             ob.error(e.clone());
           }
-        } else {
-          if let Some(ob) = self.observers.get(&e.id) {
-            ob.error(e);
-          }
+        } else if let Some(ob) = self.observers.get(&e.id) {
+          ob.error(e);
         }
       }
       outbound_message::Message::CompileResponse(e) => {
