@@ -76,18 +76,18 @@ impl OptionsBuilder {
     self
   }
 
-  pub fn load_paths(mut self, arg: Vec<String>) -> Self {
-    self.options.load_paths = Some(arg);
+  pub fn load_paths(mut self, arg: impl IntoIterator<Item = String>) -> Self {
+    self.options.load_paths = Some(arg.into_iter().collect());
     self
   }
 
-  pub fn load_path(mut self, arg: &str) -> Self {
+  pub fn load_path(mut self, arg: impl Into<String>) -> Self {
     let mut load_paths = if let Some(load_paths) = self.options.load_paths {
       load_paths
     } else {
       Vec::new()
     };
-    load_paths.push(arg.to_owned());
+    load_paths.push(arg.into());
     self.options.load_paths = Some(load_paths);
     self
   }
@@ -228,8 +228,8 @@ impl StringOptionsBuilder {
     self
   }
 
-  pub fn url(mut self, arg: Url) -> Self {
-    self.url = Some(arg);
+  pub fn url(mut self, arg: impl Into<Url>) -> Self {
+    self.url = Some(arg.into());
     self
   }
 
@@ -243,18 +243,18 @@ impl StringOptionsBuilder {
     self
   }
 
-  pub fn load_paths(mut self, arg: Vec<String>) -> Self {
-    self.options.load_paths = Some(arg);
+  pub fn load_paths(mut self, arg: impl IntoIterator<Item = String>) -> Self {
+    self.options.load_paths = Some(arg.into_iter().collect());
     self
   }
 
-  pub fn load_path(mut self, arg: &str) -> Self {
+  pub fn load_path(mut self, arg: impl Into<String>) -> Self {
     let mut load_paths = if let Some(load_paths) = self.options.load_paths {
       load_paths
     } else {
       Vec::new()
     };
-    load_paths.push(arg.to_owned());
+    load_paths.push(arg.into());
     self.options.load_paths = Some(load_paths);
     self
   }
@@ -363,14 +363,14 @@ pub enum SassImporter {
 /// https://sass-lang.com/documentation/js-api/interfaces/Importer
 pub trait Importer: Debug + Send + Sync {
   /// https://sass-lang.com/documentation/js-api/interfaces/Importer#canonicalize
-  fn canonicalize<'u, 'o>(
+  fn canonicalize(
     &self,
-    url: &'u str,
-    options: &'o ImporterOptions,
+    url: &str,
+    options: &ImporterOptions,
   ) -> Result<Option<Url>>;
 
   /// https://sass-lang.com/documentation/js-api/interfaces/Importer#load
-  fn load<'u>(&self, canonical_url: &'u Url) -> Result<Option<ImporterResult>>;
+  fn load(&self, canonical_url: &Url) -> Result<Option<ImporterResult>>;
 }
 
 pub struct ImporterOptions {
@@ -380,10 +380,10 @@ pub struct ImporterOptions {
 /// https://sass-lang.com/documentation/js-api/interfaces/FileImporter
 pub trait FileImporter: Debug + Send + Sync {
   /// https://sass-lang.com/documentation/js-api/interfaces/FileImporter#findFileUrl
-  fn find_file_url<'u, 'o>(
+  fn find_file_url(
     &self,
-    url: &'u str,
-    options: &'o ImporterOptions,
+    url: &str,
+    options: &ImporterOptions,
   ) -> Result<Option<Url>>;
 }
 
