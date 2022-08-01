@@ -59,9 +59,9 @@ impl From<ProtocolError> for Exception {
 }
 
 impl Exception {
-  pub fn new(message: String) -> Self {
+  pub fn new(message: impl Into<String>) -> Self {
     Self {
-      message,
+      message: message.into(),
       sass_message: None,
       sass_stack: None,
       span: None,
