@@ -3,18 +3,22 @@ name = "sass-embedded-host-rust"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+legacy = ["dep:regex"]
+
 [dependencies]
-prost = "0.10"
+prost = "0.11"
 url = "2"
 atty = "0.2"
 parking_lot = "0.12"
 dashmap = "5"
 crossbeam-channel = "0.5"
 rustc-hash = "1"
+regex = { version = "1", optional = true }
 
 [dev-dependencies]
 serde_json = "1"
 tempfile = "3"
 
 [build-dependencies]
-prost-build = "0.10"
+prost-build = "0.11"

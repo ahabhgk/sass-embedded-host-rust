@@ -9,12 +9,15 @@ mod options;
 mod protocol;
 mod varint;
 
+#[cfg(feature = "legacy")]
+pub mod legacy;
+
 pub use embedded::{CompileResult, Embedded, Embedded as Sass};
 pub use error::{Exception, Result};
 pub use options::{
   FileImporter, Importer, ImporterOptions, ImporterResult, Logger,
-  LoggerDebugOptions, LoggerWarnOptions, Options, OptionsBuilder, SassLogger,
-  StringOptions, StringOptionsBuilder,
+  LoggerDebugOptions, LoggerWarnOptions, Options, OptionsBuilder, SassImporter,
+  SassLogger, StringOptions, StringOptionsBuilder,
 };
 pub use protocol::{OutputStyle, SourceSpan, Syntax};
 pub use url::{self, Url};

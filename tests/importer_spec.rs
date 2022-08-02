@@ -1050,7 +1050,6 @@ fn file_importer_wraps_an_error() {
   assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
 }
 
-#[ignore]
 #[test]
 fn file_importer_rejects_a_non_file_url() {
   #[derive(Debug)]
