@@ -1,6 +1,8 @@
 use std::time;
 
-use sass_embedded_host_rust::{legacy::LegacyOptionsBuilder, Options, Sass};
+#[cfg(feature = "legacy")]
+use sass_embedded_host_rust::legacy::LegacyOptionsBuilder;
+use sass_embedded_host_rust::{Options, Sass};
 
 fn exe_path() -> std::path::PathBuf {
   std::path::PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
@@ -46,36 +48,39 @@ fn main() {
   let _ = sass
     .compile(bootstrap_utilities.to_string_lossy(), Options::default())
     .unwrap();
-  dbg!(now.elapsed());
+  println!("modern: {:?}", now.elapsed());
 
-  let now = time::Instant::now();
-  let _ = sass
-    .render(
-      LegacyOptionsBuilder::default()
-        .file(bootstrap.to_string_lossy())
-        .build(),
-    )
-    .unwrap();
-  let _ = sass
-    .render(
-      LegacyOptionsBuilder::default()
-        .file(bootstrap_grid.to_string_lossy())
-        .build(),
-    )
-    .unwrap();
-  let _ = sass
-    .render(
-      LegacyOptionsBuilder::default()
-        .file(bootstrap_reboot.to_string_lossy())
-        .build(),
-    )
-    .unwrap();
-  let _ = sass
-    .render(
-      LegacyOptionsBuilder::default()
-        .file(bootstrap_utilities.to_string_lossy())
-        .build(),
-    )
-    .unwrap();
-  dbg!(now.elapsed());
+  #[cfg(feature = "legacy")]
+  {
+    let now = time::Instant::now();
+    let _ = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .file(bootstrap.to_string_lossy())
+          .build(),
+      )
+      .unwrap();
+    let _ = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .file(bootstrap_grid.to_string_lossy())
+          .build(),
+      )
+      .unwrap();
+    let _ = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .file(bootstrap_reboot.to_string_lossy())
+          .build(),
+      )
+      .unwrap();
+    let _ = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .file(bootstrap_utilities.to_string_lossy())
+          .build(),
+      )
+      .unwrap();
+    println!("legacy: {:?}", now.elapsed());
+  }
 }

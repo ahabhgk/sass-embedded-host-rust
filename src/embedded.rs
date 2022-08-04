@@ -2,11 +2,12 @@ use std::{env, ffi::OsStr};
 
 use atty::Stream;
 
+#[cfg(feature = "legacy")]
+use crate::legacy::LEGACY_IMPORTER_PROTOCOL;
 use crate::{
   channel::Channel,
   host::ImporterRegistry,
   host::{Host, LoggerRegistry},
-  legacy::{LegacyOptions, LegacyResult, LEGACY_IMPORTER_PROTOCOL},
   protocol::inbound_message::{
     compile_request::{self, Input, StringInput},
     CompileRequest,
@@ -34,10 +35,7 @@ impl Embedded {
     let mut logger_registry = LoggerRegistry::default();
     let mut importer_registry = ImporterRegistry::default();
     let importers = importer_registry
-      .register_all(
-        options.importers,
-        options.load_paths,
-      )
+      .register_all(options.importers, options.load_paths)
       .collect();
     if let Some(l) = options.logger {
       logger_registry.register(l);
@@ -75,14 +73,13 @@ impl Embedded {
     let mut logger_registry = LoggerRegistry::default();
     let mut importer_registry = ImporterRegistry::default();
     let importers = importer_registry
-      .register_all(
-        options.common.importers,
-        options.common.load_paths,
-      )
+      .register_all(options.common.importers, options.common.load_paths)
       .collect();
     if let Some(l) = options.common.logger {
       logger_registry.register(l);
     }
+
+    #[cfg(feature = "legacy")]
     let importer = if matches!(&options.url, Some(u) if u.to_string() == LEGACY_IMPORTER_PROTOCOL)
     {
       Some(compile_request::Importer {
@@ -95,6 +92,21 @@ impl Embedded {
         .input_importer
         .map(|i| importer_registry.register(i))
     };
+
+    #[cfg(feature = "legacy")]
+    let url = options
+      .url
+      .map(|url| url.to_string())
+      .filter(|url| url != LEGACY_IMPORTER_PROTOCOL)
+      .unwrap_or_default();
+
+    #[cfg(not(feature = "legacy"))]
+    let importer = options
+      .input_importer
+      .map(|i| importer_registry.register(i));
+
+    #[cfg(not(feature = "legacy"))]
+    let url = options.url.map(|url| url.to_string()).unwrap_or_default();
 
     let request = CompileRequest {
       style: options.common.style as i32,
@@ -111,11 +123,7 @@ impl Embedded {
       importers,
       input: Some(Input::String(StringInput {
         source: source.into(),
-        url: options
-          .url
-          .map(|url| url.to_string())
-          .filter(|url| url != LEGACY_IMPORTER_PROTOCOL)
-          .unwrap_or_default(),
+        url,
         syntax: options.syntax as i32,
         importer,
       })),
