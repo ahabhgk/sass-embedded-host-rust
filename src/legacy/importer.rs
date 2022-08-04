@@ -3,7 +3,8 @@ use std::{
   fmt::Debug,
   fs,
   path::{Path, PathBuf},
-  time::{SystemTime, UNIX_EPOCH}, sync::Arc,
+  sync::Arc,
+  time::{SystemTime, UNIX_EPOCH},
 };
 
 use parking_lot::Mutex;
@@ -128,12 +129,8 @@ impl Importer for Arc<LegacyImporterWrapper> {
             if Regex::new("^[A-Za-z+.-]+:").unwrap().is_match(url) {
               Url::parse(url).unwrap()
             } else {
-              Url::parse(&format!(
-                "{}{}",
-                LEGACY_IMPORTER_PROTOCOL,
-                Url::parse(url).unwrap()
-              ))
-              .unwrap()
+              Url::parse(&format!("{}{}", LEGACY_IMPORTER_PROTOCOL, url))
+                .unwrap()
             },
           ))
         }

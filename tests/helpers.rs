@@ -3,6 +3,12 @@ use std::{fs, io::Write, path::Path};
 use sass_embedded_host_rust::Url;
 use tempfile::TempDir;
 
+pub fn exe_path() -> std::path::PathBuf {
+  std::path::PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
+    .join("sass_embedded")
+    .join("dart-sass-embedded")
+}
+
 #[derive(Debug)]
 pub struct Sandbox {
   temp: TempDir,
