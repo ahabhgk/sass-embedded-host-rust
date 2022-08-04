@@ -3,7 +3,7 @@ use std::{
   fmt::Debug,
   fs,
   path::{Path, PathBuf},
-  time::{SystemTime, UNIX_EPOCH},
+  time::{SystemTime, UNIX_EPOCH}, sync::Arc,
 };
 
 use parking_lot::Mutex;
@@ -15,8 +15,8 @@ use crate::{
 
 use super::{LegacyImporterResult, LegacyImporterThis, LegacyPluginThis};
 
-const END_OF_LOAD_PROTOCOL: &str = "sass-embedded-legacy-load-done:";
-const LEGACY_IMPORTER_PROTOCOL: &str = "legacy-importer:";
+pub const END_OF_LOAD_PROTOCOL: &str = "sass-embedded-legacy-load-done:";
+pub const LEGACY_IMPORTER_PROTOCOL: &str = "legacy-importer:";
 
 pub trait LegacyImporter: Debug + Sync + Send {
   fn call(
@@ -45,9 +45,9 @@ impl LegacyImporterWrapper {
     callbacks: Vec<SassLegacyImporter>,
     load_paths: Vec<String>,
     initial_prev: String,
-  ) -> Self {
+  ) -> Arc<Self> {
     let path = initial_prev != "stdin";
-    Self {
+    Arc::new(Self {
       prev_stack: Mutex::new(vec![PreviousUrl {
         url: if path {
           initial_prev
@@ -61,7 +61,7 @@ impl LegacyImporterWrapper {
       callbacks,
       this,
       load_paths,
-    }
+    })
   }
 
   fn invoke_callbacks(
@@ -87,7 +87,7 @@ impl LegacyImporterWrapper {
   }
 }
 
-impl Importer for LegacyImporterWrapper {
+impl Importer for Arc<LegacyImporterWrapper> {
   fn canonicalize(
     &self,
     url: &str,
@@ -257,7 +257,7 @@ struct PreviousUrl {
   path: bool,
 }
 
-fn url_to_file_path_cross_platform(file_url: &Url) -> PathBuf {
+pub fn url_to_file_path_cross_platform(file_url: &Url) -> PathBuf {
   let p = file_url
     .to_file_path()
     .unwrap()

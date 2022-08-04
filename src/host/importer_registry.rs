@@ -1,7 +1,7 @@
 use rustc_hash::FxHashMap;
 
 use crate::{
-  options::{FileImporter, Importer, ImporterOptions, SassImporter},
+  api::{FileImporter, Importer, ImporterOptions, SassImporter},
   protocol::{
     inbound_message::{
       canonicalize_response, compile_request, file_import_response,
