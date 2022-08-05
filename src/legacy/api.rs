@@ -4,11 +4,9 @@ use std::{
   time::{Duration, SystemTime},
 };
 
-use url::Url;
-
 use crate::{
   legacy::url_to_file_path_cross_platform, CompileResult, Options,
-  StringOptions, Syntax,
+  StringOptions, Syntax, Url,
 };
 pub use crate::{OutputStyle, SassLogger};
 
@@ -113,7 +111,30 @@ pub struct LegacyImporterThis {
 
 pub enum LegacyImporterResult {
   File(PathBuf),
-  Contents(String),
+  Contents {
+    contents: String,
+    file: Option<PathBuf>,
+  },
+}
+
+impl LegacyImporterResult {
+  pub fn file(path: impl Into<PathBuf>) -> Self {
+    Self::File(path.into())
+  }
+
+  pub fn contents(contents: impl Into<String>) -> Self {
+    Self::Contents {
+      contents: contents.into(),
+      file: None,
+    }
+  }
+
+  pub fn both(contents: impl Into<String>, file: impl Into<PathBuf>) -> Self {
+    Self::Contents {
+      contents: contents.into(),
+      file: Some(file.into()),
+    }
+  }
 }
 
 #[derive(Debug, Default)]

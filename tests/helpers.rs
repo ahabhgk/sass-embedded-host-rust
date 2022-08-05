@@ -1,4 +1,8 @@
-use std::{env, fs, io::Write, path::Path};
+use std::{
+  env, fs,
+  io::Write,
+  path::{Path, PathBuf},
+};
 
 use sass_embedded_host_rust::Url;
 use tempfile::TempDir;
@@ -35,8 +39,18 @@ impl Sandbox {
     self
   }
 
-  pub fn chdir(&self) {
+  pub fn chdir(&self) -> ChdirGuard {
+    let cwd = std::env::current_dir().unwrap();
     env::set_current_dir(self.path()).unwrap();
+    ChdirGuard(cwd)
+  }
+}
+
+pub struct ChdirGuard(PathBuf);
+
+impl Drop for ChdirGuard {
+  fn drop(&mut self) {
+    env::set_current_dir(&self.0).unwrap();
   }
 }
 

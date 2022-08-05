@@ -1,5 +1,6 @@
 use std::{
   collections::VecDeque,
+  env,
   fmt::Debug,
   fs,
   path::{Path, PathBuf},
@@ -114,6 +115,7 @@ impl Importer for Arc<LegacyImporterWrapper> {
         }
       }
       *expecting_relative_load = false;
+      return Ok(None);
     } else {
       *expecting_relative_load = true;
     }
@@ -123,43 +125,54 @@ impl Importer for Arc<LegacyImporterWrapper> {
       Err(e) => Err(e),
       Ok(None) => Ok(None),
       Ok(Some(result)) => match result {
-        LegacyImporterResult::Contents(contents) => {
+        LegacyImporterResult::Contents { contents, file } => {
           *self.last_contents.lock() = Some(contents);
-          Ok(Some(
-            if Regex::new("^[A-Za-z+.-]+:").unwrap().is_match(url) {
-              Url::parse(url).unwrap()
-            } else {
-              Url::parse(&format!("{}{}", LEGACY_IMPORTER_PROTOCOL, url))
-                .unwrap()
-            },
-          ))
+          Ok(Some(if let Some(file) = file {
+            Url::parse(&format!(
+              "{}{}",
+              LEGACY_IMPORTER_PROTOCOL,
+              file.to_string_lossy()
+            ))
+            .unwrap()
+          } else if Regex::new("^[A-Za-z+.-]+:").unwrap().is_match(url) {
+            Url::parse(url).unwrap()
+          } else {
+            Url::parse(&format!("{}{}", LEGACY_IMPORTER_PROTOCOL, url)).unwrap()
+          }))
         }
         LegacyImporterResult::File(file) => {
           if file.is_absolute() {
             let resolved = resolve_path(file, options.from_import)?;
-            return Ok(resolved.map(|p| Url::from_file_path(p).unwrap()));
-          }
-          let mut prefixes = VecDeque::from(self.load_paths.clone());
-          prefixes.push_back(".".to_owned());
-          if prev.path {
-            prefixes.push_front(
-              Path::new(&prev.url)
-                .parent()
-                .unwrap()
-                .to_string_lossy()
-                .to_string(),
-            );
-          }
-          for prefix in prefixes {
-            let resolved = resolve_path(
-              Path::new(&prefix).join(file.clone()),
-              options.from_import,
-            )?;
-            if let Some(p) = resolved {
-              return Ok(Some(Url::from_file_path(p).unwrap()));
+            Ok(resolved.map(|p| Url::from_file_path(p).unwrap()))
+          } else {
+            let mut prefixes = VecDeque::from(self.load_paths.clone());
+            prefixes.push_back(".".to_owned());
+            if prev.path {
+              prefixes.push_front(
+                Path::new(&prev.url)
+                  .parent()
+                  .unwrap()
+                  .to_string_lossy()
+                  .to_string(),
+              );
             }
+            let mut resolved = None;
+            for prefix in prefixes {
+              if let Some(p) = resolve_path(
+                Path::new(&prefix).join(file.clone()),
+                options.from_import,
+              )? {
+                let p = if p.is_absolute() {
+                  p
+                } else {
+                  env::current_dir().unwrap().join(p)
+                };
+                resolved = Some(Url::from_file_path(p).unwrap());
+                break;
+              }
+            }
+            Ok(resolved)
           }
-          Ok(None)
         }
       },
     }?;
@@ -274,7 +287,7 @@ fn resolve_path(path: PathBuf, from_import: bool) -> Result<Option<PathBuf>> {
       if from_import {
         if let Ok(Some(p)) = exactly_one(try_path(Path::new(&format!(
           "{}.import.{}",
-          path.file_stem().unwrap().to_string_lossy(),
+          without_extension(&path).to_string_lossy(),
           extension.to_string_lossy()
         )))) {
           return Ok(Some(p));
@@ -363,5 +376,11 @@ fn try_path(path: &Path) -> Vec<PathBuf> {
   if file_exists(path) {
     result.push(path.to_path_buf());
   }
+  result
+}
+
+fn without_extension(path: &Path) -> PathBuf {
+  let mut result = path.to_path_buf();
+  result.set_extension("");
   result
 }
