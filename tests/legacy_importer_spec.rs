@@ -5,7 +5,7 @@ use helpers::{exe_path, Sandbox, ToUrl};
 #[cfg(feature = "legacy")]
 use sass_embedded_host_rust::{
   legacy::{
-    LegacyImporter, LegacyImporterResult, LegacyImporterThis, LegacyOptions,
+    LegacyImporter, LegacyImporterResult, LegacyImporterThis,
     LegacyOptionsBuilder,
   },
   Options, OptionsBuilder, OutputStyle, Result, Sass, StringOptions,
@@ -114,4 +114,81 @@ fn an_empty_object_means_an_empty_file() {
     )
     .unwrap();
   assert_eq!(res.css, "".as_bytes());
+}
+
+#[cfg(feature = "legacy")]
+mod import_precedence {
+  use super::*;
+
+  mod in_sandbox_dir {
+    use super::*;
+
+    #[test]
+    fn relative_file_is_sharp_1() {
+      #[derive(Debug, Default)]
+      struct MyImporter;
+
+      impl LegacyImporter for MyImporter {
+        fn call(
+          &self,
+          _: &LegacyImporterThis,
+          _: &str,
+          _: &str,
+        ) -> Result<Option<LegacyImporterResult>> {
+          Ok(Some(LegacyImporterResult::Contents(
+            "a {from: importer}".to_owned(),
+          )))
+        }
+      }
+
+      let sandbox = Sandbox::default();
+      sandbox
+        .write(sandbox.path().join("sub/test.scss"), "a {from: relative}")
+        .write(sandbox.path().join("sub/base.scss"), "@import \"test\"");
+      sandbox.chdir();
+      let mut sass = Sass::new(exe_path());
+      let res = sass
+        .render(
+          LegacyOptionsBuilder::default()
+            .file(sandbox.path().join("sub/base.scss").to_string_lossy())
+            .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+            .build(),
+        )
+        .unwrap();
+      assert_eq!(res.css, "a {\n  from: relative;\n}".as_bytes());
+    }
+  }
+
+  #[test]
+  fn importer_is_sharp_2() {
+    #[derive(Debug, Default)]
+    struct MyImporter;
+
+    impl LegacyImporter for MyImporter {
+      fn call(
+        &self,
+        _: &LegacyImporterThis,
+        _: &str,
+        _: &str,
+      ) -> Result<Option<LegacyImporterResult>> {
+        Ok(Some(LegacyImporterResult::Contents(
+          "a {from: importer}".to_owned(),
+        )))
+      }
+    }
+
+    let sandbox = Sandbox::default();
+    sandbox.write(sandbox.path().join("test.scss"), "a {from: cwd}");
+    sandbox.chdir();
+    let mut sass = Sass::new(exe_path());
+    let res = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .data("@import \"test\"")
+          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .build(),
+      )
+      .unwrap();
+    assert_eq!(res.css, "a {\n  from: importer;\n}".as_bytes());
+  }
 }

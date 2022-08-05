@@ -1,4 +1,4 @@
-use std::{fs, io::Write, path::Path};
+use std::{env, fs, io::Write, path::Path};
 
 use sass_embedded_host_rust::Url;
 use tempfile::TempDir;
@@ -33,6 +33,10 @@ impl Sandbox {
     let mut file = fs::File::create(path).unwrap();
     writeln!(file, "{}", contents).unwrap();
     self
+  }
+
+  pub fn chdir(&self) {
+    env::set_current_dir(self.path()).unwrap();
   }
 }
 

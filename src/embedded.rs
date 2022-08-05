@@ -1,18 +1,20 @@
-use std::{env, ffi::OsStr};
+use std::ffi::OsStr;
 
 use atty::Stream;
 
-#[cfg(feature = "legacy")]
-use crate::legacy::LEGACY_IMPORTER_PROTOCOL;
 use crate::{
   channel::Channel,
   host::ImporterRegistry,
   host::{Host, LoggerRegistry},
   protocol::inbound_message::{
-    compile_request::{self, Input, StringInput},
+    compile_request::{Input, StringInput},
     CompileRequest,
   },
   CompileResult, Options, Result, StringOptions,
+};
+#[cfg(feature = "legacy")]
+use crate::{
+  legacy::LEGACY_IMPORTER_PROTOCOL, protocol::inbound_message::compile_request,
 };
 
 #[derive(Debug)]
@@ -80,17 +82,20 @@ impl Embedded {
     }
 
     #[cfg(feature = "legacy")]
-    let importer = if matches!(&options.url, Some(u) if u.to_string() == LEGACY_IMPORTER_PROTOCOL)
+    let importer = if let Some(input_importer) = options.input_importer {
+      Some(importer_registry.register(input_importer))
+    } else if matches!(&options.url, Some(u) if u.to_string() == LEGACY_IMPORTER_PROTOCOL)
     {
       Some(compile_request::Importer {
         importer: Some(compile_request::importer::Importer::Path(
-          env::current_dir().unwrap().to_string_lossy().to_string(),
+          std::env::current_dir()
+            .unwrap()
+            .to_string_lossy()
+            .to_string(),
         )),
       })
     } else {
-      options
-        .input_importer
-        .map(|i| importer_registry.register(i))
+      None
     };
 
     #[cfg(feature = "legacy")]
