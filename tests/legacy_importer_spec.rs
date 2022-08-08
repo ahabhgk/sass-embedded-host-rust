@@ -3,17 +3,16 @@
 #[path = "./helpers.rs"]
 mod helpers;
 
-use std::{env, path::PathBuf, sync::Arc};
+use std::{env, path::PathBuf, sync::Arc, time::SystemTime};
 
-use helpers::{exe_path, Sandbox, ToUrl};
+use helpers::{exe_path, Sandbox};
 use parking_lot::Mutex;
 use sass_embedded_host_rust::{
   legacy::{
-    LegacyImporter, LegacyImporterResult, LegacyImporterThis,
-    LegacyOptionsBuilder,
+    IndentType, LegacyImporter, LegacyImporterResult, LegacyImporterThis,
+    LegacyOptionsBuilder, LineFeed, PATH_DELIMITER,
   },
-  Options, OptionsBuilder, OutputStyle, Result, Sass, StringOptions,
-  StringOptionsBuilder, Syntax, Url,
+  Exception, Result, Sass,
 };
 
 #[test]
@@ -140,7 +139,7 @@ mod import_precedence {
       sandbox
         .write(sandbox.path().join("sub/test.scss"), "a {from: relative}")
         .write(sandbox.path().join("sub/base.scss"), "@import \"test\"");
-      let chdir = sandbox.chdir();
+      let _chdir = sandbox.chdir();
       let mut sass = Sass::new(exe_path());
       let res = sass
         .render(
@@ -151,7 +150,6 @@ mod import_precedence {
         )
         .unwrap();
       assert_eq!(res.css, "a {\n  from: relative;\n}".as_bytes());
-      drop(chdir);
     }
 
     #[test]
@@ -172,7 +170,7 @@ mod import_precedence {
 
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("test.scss"), "a {from: cwd}");
-      let chdir = sandbox.chdir();
+      let _chdir = sandbox.chdir();
       let mut sass = Sass::new(exe_path());
       let res = sass
         .render(
@@ -183,7 +181,6 @@ mod import_precedence {
         )
         .unwrap();
       assert_eq!(res.css, "a {\n  from: importer;\n}".as_bytes());
-      drop(chdir);
     }
 
     #[test]
@@ -192,7 +189,7 @@ mod import_precedence {
       sandbox
         .write(sandbox.path().join("test.scss"), "a {from: cwd}")
         .write(sandbox.path().join("sub/test.scss"), "a {from: load path}");
-      let chdir = sandbox.chdir();
+      let _chdir = sandbox.chdir();
       let mut sass = Sass::new(exe_path());
       let res = sass
         .render(
@@ -203,7 +200,6 @@ mod import_precedence {
         )
         .unwrap();
       assert_eq!(res.css, "a {\n  from: cwd;\n}".as_bytes());
-      drop(chdir);
     }
 
     // Regression test for embedded host.
@@ -785,7 +781,7 @@ mod with_a_file_redirect {
 
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("test.scss"), "a {b: c}");
-      let chdir = sandbox.chdir();
+      let _chdir = sandbox.chdir();
       let mut sass = Sass::new(exe_path());
       let res = sass
         .render(
@@ -796,7 +792,6 @@ mod with_a_file_redirect {
         )
         .unwrap();
       assert_eq!(res.css, "a {\n  b: c;\n}".as_bytes());
-      drop(chdir);
     }
 
     #[test]
@@ -820,7 +815,7 @@ mod with_a_file_redirect {
         .write(sandbox.path().join("_other.scss"), "a {from: cwd}")
         .write(sandbox.path().join("sub/test.scss"), "@import \"foo\"")
         .write(sandbox.path().join("sub/_other.scss"), "a {from: relative}");
-      let chdir = sandbox.chdir();
+      let _chdir = sandbox.chdir();
       let mut sass = Sass::new(exe_path());
       let res = sass
         .render(
@@ -831,7 +826,6 @@ mod with_a_file_redirect {
         )
         .unwrap();
       assert_eq!(res.css, "a {\n  from: relative;\n}".as_bytes());
-      drop(chdir);
     }
 
     #[test]
@@ -858,7 +852,7 @@ mod with_a_file_redirect {
           sandbox.path().join("sub/_other.scss"),
           "a {from: load path}",
         );
-      let chdir = sandbox.chdir();
+      let _chdir = sandbox.chdir();
       let mut sass = Sass::new(exe_path());
       let res = sass
         .render(
@@ -870,7 +864,6 @@ mod with_a_file_redirect {
         )
         .unwrap();
       assert_eq!(res.css, "a {\n  from: cwd;\n}".as_bytes());
-      drop(chdir);
     }
   }
 }
@@ -1279,5 +1272,615 @@ mod the_previous_url {
       .unwrap();
     assert_eq!(*count1.lock(), 2);
     assert_eq!(*count2.lock(), 1);
+  }
+
+  // Regression test for sass/embedded-host-node#120
+  #[test]
+  fn is_passed_after_a_relative_import() {
+    #[derive(Debug, Default)]
+    struct MyImporter {
+      sandbox: Sandbox,
+      count: Arc<Mutex<u8>>,
+    }
+
+    impl LegacyImporter for MyImporter {
+      fn call(
+        &self,
+        _: &LegacyImporterThis,
+        url: &str,
+        prev: &str,
+      ) -> Result<Option<LegacyImporterResult>> {
+        *self.count.lock() += 1;
+        assert_eq!(url, "importer");
+        assert_eq!(
+          prev,
+          self.sandbox.path().join("test.scss").to_string_lossy()
+        );
+        Ok(Some(LegacyImporterResult::contents("a {b: importer}")))
+      }
+    }
+
+    let sandbox = Sandbox::default();
+    sandbox
+      .write(
+        sandbox.path().join("test.scss"),
+        "@import \"relative\";\n@import \"importer\";",
+      )
+      .write(sandbox.path().join("_relative.scss"), "a {b: relative}");
+
+    let mut sass = Sass::new(exe_path());
+    let count = Arc::new(Mutex::new(0));
+    let res = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .file(sandbox.path().join("test.scss").to_string_lossy())
+          .importer(Box::new(MyImporter {
+            sandbox,
+            count: Arc::clone(&count),
+          }) as Box<dyn LegacyImporter>)
+          .build(),
+      )
+      .unwrap();
+    assert_eq!(
+      res.css,
+      "a {\n  b: relative;\n}\n\na {\n  b: importer;\n}".as_bytes()
+    );
+    assert_eq!(*count.lock(), 1);
+  }
+}
+
+mod this {
+  use super::*;
+
+  #[test]
+  fn includes_default_option_values() {
+    #[derive(Debug, Default)]
+    struct MyImporter {
+      count: Arc<Mutex<u8>>,
+    }
+
+    impl LegacyImporter for MyImporter {
+      fn call(
+        &self,
+        this: &LegacyImporterThis,
+        _: &str,
+        _: &str,
+      ) -> Result<Option<LegacyImporterResult>> {
+        *self.count.lock() += 1;
+        let options = &this.options;
+        assert_eq!(
+          options.include_paths,
+          std::env::current_dir().unwrap().to_string_lossy()
+        );
+        assert_eq!(options.precision, 10);
+        assert_eq!(options.style, 1);
+        assert_eq!(options.indent_type, IndentType::Space);
+        assert_eq!(options.indent_width, 2);
+        assert_eq!(options.linefeed, LineFeed::LF);
+        Ok(Some(LegacyImporterResult::contents("")))
+      }
+    }
+
+    let mut sass = Sass::new(exe_path());
+    let count = Arc::new(Mutex::new(0));
+    let _ = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .data("@import \"foo\"")
+          .importer(Box::new(MyImporter {
+            count: Arc::clone(&count),
+          }) as Box<dyn LegacyImporter>)
+          .build(),
+      )
+      .unwrap();
+    assert_eq!(*count.lock(), 1);
+  }
+
+  #[test]
+  fn includes_the_data_when_rendering_via_data() {
+    #[derive(Debug, Default)]
+    struct MyImporter {
+      count: Arc<Mutex<u8>>,
+    }
+
+    impl LegacyImporter for MyImporter {
+      fn call(
+        &self,
+        this: &LegacyImporterThis,
+        _: &str,
+        _: &str,
+      ) -> Result<Option<LegacyImporterResult>> {
+        *self.count.lock() += 1;
+        let options = &this.options;
+        assert!(options.data.is_some());
+        assert_eq!(options.data.as_ref().unwrap(), "@import \"foo\"");
+        assert!(options.file.is_none());
+        Ok(Some(LegacyImporterResult::contents("")))
+      }
+    }
+
+    let mut sass = Sass::new(exe_path());
+    let count = Arc::new(Mutex::new(0));
+    let _ = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .data("@import \"foo\"")
+          .importer(Box::new(MyImporter {
+            count: Arc::clone(&count),
+          }) as Box<dyn LegacyImporter>)
+          .build(),
+      )
+      .unwrap();
+    assert_eq!(*count.lock(), 1);
+  }
+
+  #[test]
+  fn includes_the_filename_when_rendering_via_file() {
+    #[derive(Debug, Default)]
+    struct MyImporter {
+      sandbox: Sandbox,
+      count: Arc<Mutex<u8>>,
+    }
+
+    impl LegacyImporter for MyImporter {
+      fn call(
+        &self,
+        this: &LegacyImporterThis,
+        _: &str,
+        _: &str,
+      ) -> Result<Option<LegacyImporterResult>> {
+        *self.count.lock() += 1;
+        let options = &this.options;
+        assert!(options.file.is_some());
+        assert_eq!(
+          options.file.as_ref().unwrap(),
+          &self.sandbox.path().join("test.scss").to_string_lossy()
+        );
+        Ok(Some(LegacyImporterResult::contents("")))
+      }
+    }
+
+    let sandbox = Sandbox::default();
+    sandbox.write(sandbox.path().join("test.scss"), "@import \"foo\"");
+
+    let mut sass = Sass::new(exe_path());
+    let count = Arc::new(Mutex::new(0));
+    let _ = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .file(sandbox.path().join("test.scss").to_string_lossy())
+          .importer(Box::new(MyImporter {
+            sandbox,
+            count: Arc::clone(&count),
+          }) as Box<dyn LegacyImporter>)
+          .build(),
+      )
+      .unwrap();
+    assert_eq!(*count.lock(), 1);
+  }
+
+  #[test]
+  fn includes_other_include_paths() {
+    #[derive(Debug, Default)]
+    struct MyImporter {
+      sandbox: Sandbox,
+      count: Arc<Mutex<u8>>,
+    }
+
+    impl LegacyImporter for MyImporter {
+      fn call(
+        &self,
+        this: &LegacyImporterThis,
+        _: &str,
+        _: &str,
+      ) -> Result<Option<LegacyImporterResult>> {
+        *self.count.lock() += 1;
+        assert!(this.options.include_paths.contains(&format!(
+          "{}{PATH_DELIMITER}{}",
+          std::env::current_dir().unwrap().to_string_lossy(),
+          self.sandbox.path().to_string_lossy()
+        )));
+        Ok(Some(LegacyImporterResult::contents("")))
+      }
+    }
+
+    let sandbox = Sandbox::default();
+    let root = sandbox.path().to_string_lossy().to_string();
+    let mut sass = Sass::new(exe_path());
+    let count = Arc::new(Mutex::new(0));
+    let _ = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .data("@import \"foo\"")
+          .importer(Box::new(MyImporter {
+            sandbox,
+            count: Arc::clone(&count),
+          }) as Box<dyn LegacyImporter>)
+          .include_path(root)
+          .build(),
+      )
+      .unwrap();
+    assert_eq!(*count.lock(), 1);
+  }
+
+  mod includes_render_stats_with {
+    use super::*;
+
+    #[test]
+    fn a_start_time() {
+      #[derive(Debug)]
+      struct MyImporter {
+        start: SystemTime,
+        count: Arc<Mutex<u8>>,
+      }
+
+      impl LegacyImporter for MyImporter {
+        fn call(
+          &self,
+          this: &LegacyImporterThis,
+          _: &str,
+          _: &str,
+        ) -> Result<Option<LegacyImporterResult>> {
+          *self.count.lock() += 1;
+          assert!(this.options.result.stats.start > self.start);
+          Ok(Some(LegacyImporterResult::contents("")))
+        }
+      }
+
+      let start = SystemTime::now();
+      let count = Arc::new(Mutex::new(0));
+      let mut sass = Sass::new(exe_path());
+      let _ = sass
+        .render(
+          LegacyOptionsBuilder::default()
+            .data("@import \"foo\"")
+            .importer(Box::new(MyImporter {
+              start,
+              count: Arc::clone(&count),
+            }) as Box<dyn LegacyImporter>)
+            .build(),
+        )
+        .unwrap();
+      assert_eq!(*count.lock(), 1);
+    }
+
+    #[test]
+    fn a_data_entry() {
+      #[derive(Debug)]
+      struct MyImporter {
+        count: Arc<Mutex<u8>>,
+      }
+
+      impl LegacyImporter for MyImporter {
+        fn call(
+          &self,
+          this: &LegacyImporterThis,
+          _: &str,
+          _: &str,
+        ) -> Result<Option<LegacyImporterResult>> {
+          *self.count.lock() += 1;
+          assert_eq!(this.options.result.stats.entry, "data");
+          Ok(Some(LegacyImporterResult::contents("")))
+        }
+      }
+
+      let count = Arc::new(Mutex::new(0));
+      let mut sass = Sass::new(exe_path());
+      let _ = sass
+        .render(
+          LegacyOptionsBuilder::default()
+            .data("@import \"foo\"")
+            .importer(Box::new(MyImporter {
+              count: Arc::clone(&count),
+            }) as Box<dyn LegacyImporter>)
+            .build(),
+        )
+        .unwrap();
+      assert_eq!(*count.lock(), 1);
+    }
+
+    #[test]
+    fn a_file_entry() {
+      #[derive(Debug)]
+      struct MyImporter {
+        sandbox: Sandbox,
+        count: Arc<Mutex<u8>>,
+      }
+
+      impl LegacyImporter for MyImporter {
+        fn call(
+          &self,
+          this: &LegacyImporterThis,
+          _: &str,
+          _: &str,
+        ) -> Result<Option<LegacyImporterResult>> {
+          *self.count.lock() += 1;
+          assert_eq!(
+            this.options.result.stats.entry,
+            self.sandbox.path().join("test.scss").to_string_lossy()
+          );
+          Ok(Some(LegacyImporterResult::contents("")))
+        }
+      }
+
+      let sandbox = Sandbox::default();
+      sandbox.write(sandbox.path().join("test.scss"), "@import \"foo\"");
+
+      let count = Arc::new(Mutex::new(0));
+      let mut sass = Sass::new(exe_path());
+      let _ = sass
+        .render(
+          LegacyOptionsBuilder::default()
+            .file(sandbox.path().join("test.scss").to_string_lossy())
+            .importer(Box::new(MyImporter {
+              sandbox,
+              count: Arc::clone(&count),
+            }) as Box<dyn LegacyImporter>)
+            .build(),
+        )
+        .unwrap();
+      assert_eq!(*count.lock(), 1);
+    }
+  }
+
+  mod includes_a_from_import_field_that_is {
+    use super::*;
+
+    #[test]
+    fn true_for_an_at_import() {
+      #[derive(Debug)]
+      struct MyImporter {
+        count: Arc<Mutex<u8>>,
+      }
+
+      impl LegacyImporter for MyImporter {
+        fn call(
+          &self,
+          this: &LegacyImporterThis,
+          _: &str,
+          _: &str,
+        ) -> Result<Option<LegacyImporterResult>> {
+          *self.count.lock() += 1;
+          assert_eq!(this.from_import, true);
+          Ok(Some(LegacyImporterResult::contents("")))
+        }
+      }
+
+      let count = Arc::new(Mutex::new(0));
+      let mut sass = Sass::new(exe_path());
+      let _ = sass
+        .render(
+          LegacyOptionsBuilder::default()
+            .data("@import \"foo\"")
+            .importer(Box::new(MyImporter {
+              count: Arc::clone(&count),
+            }) as Box<dyn LegacyImporter>)
+            .build(),
+        )
+        .unwrap();
+      assert_eq!(*count.lock(), 1);
+    }
+
+    #[test]
+    fn false_for_an_at_use() {
+      #[derive(Debug)]
+      struct MyImporter {
+        count: Arc<Mutex<u8>>,
+      }
+
+      impl LegacyImporter for MyImporter {
+        fn call(
+          &self,
+          this: &LegacyImporterThis,
+          _: &str,
+          _: &str,
+        ) -> Result<Option<LegacyImporterResult>> {
+          *self.count.lock() += 1;
+          assert_eq!(this.from_import, false);
+          Ok(Some(LegacyImporterResult::contents("")))
+        }
+      }
+
+      let count = Arc::new(Mutex::new(0));
+      let mut sass = Sass::new(exe_path());
+      let _ = sass
+        .render(
+          LegacyOptionsBuilder::default()
+            .data("@use \"foo\"")
+            .importer(Box::new(MyImporter {
+              count: Arc::clone(&count),
+            }) as Box<dyn LegacyImporter>)
+            .build(),
+        )
+        .unwrap();
+      assert_eq!(*count.lock(), 1);
+    }
+
+    #[test]
+    fn false_for_an_at_forward() {
+      #[derive(Debug)]
+      struct MyImporter {
+        count: Arc<Mutex<u8>>,
+      }
+
+      impl LegacyImporter for MyImporter {
+        fn call(
+          &self,
+          this: &LegacyImporterThis,
+          _: &str,
+          _: &str,
+        ) -> Result<Option<LegacyImporterResult>> {
+          *self.count.lock() += 1;
+          assert_eq!(this.from_import, false);
+          Ok(Some(LegacyImporterResult::contents("")))
+        }
+      }
+
+      let count = Arc::new(Mutex::new(0));
+      let mut sass = Sass::new(exe_path());
+      let _ = sass
+        .render(
+          LegacyOptionsBuilder::default()
+            .data("@forward \"foo\"")
+            .importer(Box::new(MyImporter {
+              count: Arc::clone(&count),
+            }) as Box<dyn LegacyImporter>)
+            .build(),
+        )
+        .unwrap();
+      assert_eq!(*count.lock(), 1);
+    }
+
+    #[test]
+    fn false_for_meta_load_css() {
+      #[derive(Debug)]
+      struct MyImporter {
+        count: Arc<Mutex<u8>>,
+      }
+
+      impl LegacyImporter for MyImporter {
+        fn call(
+          &self,
+          this: &LegacyImporterThis,
+          _: &str,
+          _: &str,
+        ) -> Result<Option<LegacyImporterResult>> {
+          *self.count.lock() += 1;
+          assert_eq!(this.from_import, false);
+          Ok(Some(LegacyImporterResult::contents("")))
+        }
+      }
+
+      let count = Arc::new(Mutex::new(0));
+      let mut sass = Sass::new(exe_path());
+      let _ = sass
+        .render(
+          LegacyOptionsBuilder::default()
+            .data("@use \"sass:meta\"; @include meta.load-css(\"foo\")")
+            .importer(Box::new(MyImporter {
+              count: Arc::clone(&count),
+            }) as Box<dyn LegacyImporter>)
+            .build(),
+        )
+        .unwrap();
+      assert_eq!(*count.lock(), 1);
+    }
+  }
+}
+
+mod gracefully_handles_an_error_when {
+  use super::*;
+
+  #[test]
+  fn an_importer_redirects_to_a_non_existent_file() {
+    #[derive(Debug)]
+    struct MyImporter;
+
+    impl LegacyImporter for MyImporter {
+      fn call(
+        &self,
+        _: &LegacyImporterThis,
+        _: &str,
+        _: &str,
+      ) -> Result<Option<LegacyImporterResult>> {
+        Ok(Some(LegacyImporterResult::file("_dose_not_exist")))
+      }
+    }
+
+    let mut sass = Sass::new(exe_path());
+    let err = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .data("@import \"foo\"")
+          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .build(),
+      )
+      .unwrap_err();
+    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+  }
+
+  #[test]
+  fn an_error_is_returned() {
+    #[derive(Debug)]
+    struct MyImporter;
+
+    impl LegacyImporter for MyImporter {
+      fn call(
+        &self,
+        _: &LegacyImporterThis,
+        _: &str,
+        _: &str,
+      ) -> Result<Option<LegacyImporterResult>> {
+        Err(Exception::new("oh no"))
+      }
+    }
+
+    let mut sass = Sass::new(exe_path());
+    let err = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .data("@import \"foo\"")
+          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .build(),
+      )
+      .unwrap_err();
+    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+  }
+
+  #[test]
+  fn null_is_returned() {
+    #[derive(Debug)]
+    struct MyImporter;
+
+    impl LegacyImporter for MyImporter {
+      fn call(
+        &self,
+        _: &LegacyImporterThis,
+        _: &str,
+        _: &str,
+      ) -> Result<Option<LegacyImporterResult>> {
+        Ok(None)
+      }
+    }
+
+    let mut sass = Sass::new(exe_path());
+    let err = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .data("@import \"foo\"")
+          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .build(),
+      )
+      .unwrap_err();
+    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+  }
+
+  #[test]
+  fn it_occurs_in_a_file_with_a_custom_url_scheme() {
+    #[derive(Debug)]
+    struct MyImporter;
+
+    impl LegacyImporter for MyImporter {
+      fn call(
+        &self,
+        _: &LegacyImporterThis,
+        _: &str,
+        _: &str,
+      ) -> Result<Option<LegacyImporterResult>> {
+        Ok(Some(LegacyImporterResult::contents("@error \"oh no\"")))
+      }
+    }
+
+    let mut sass = Sass::new(exe_path());
+    let err = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .data("@import \"foo:bar\"")
+          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .build(),
+      )
+      .unwrap_err();
+    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+    assert_eq!(err.span().unwrap().url, "foo:bar");
   }
 }

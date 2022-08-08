@@ -16,14 +16,14 @@ use super::{
 };
 
 #[cfg(target_family = "windows")]
-const PATH_DELIMITER: &str = ";";
+pub const PATH_DELIMITER: &str = ";";
 #[cfg(target_family = "unix")]
-const PATH_DELIMITER: &str = ":";
+pub const PATH_DELIMITER: &str = ":";
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum IndentType {
-  Tab,
   Space,
+  Tab,
 }
 
 impl Default for IndentType {
@@ -32,7 +32,7 @@ impl Default for IndentType {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum LineFeed {
   CR,
   CRLF,
@@ -93,10 +93,7 @@ impl LegacyPluginThis {
         result: LegacyPluginThisOptionsResult {
           stats: LegacyPluginThisOptionsResultStats {
             start: SystemTime::now(),
-            entry: options
-              .file
-              .clone()
-              .unwrap_or_else(|| options.data.clone().unwrap()),
+            entry: options.file.clone().unwrap_or_else(|| "data".to_owned()),
           },
         },
       },

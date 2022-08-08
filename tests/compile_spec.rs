@@ -585,7 +585,6 @@ mod compile {
             Options::default(),
           )
           .unwrap();
-        dbg!(&res);
         assert_eq!(
           res.loaded_urls,
           vec![sandbox.path().join("input.scss").to_url().to_string()]
