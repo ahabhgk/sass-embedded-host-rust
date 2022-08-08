@@ -1,3 +1,6 @@
 [submodule "examples/bootstrap5/bootstrap"]
 	path = examples/bootstrap5/bootstrap
 	url = https://github.com/twbs/bootstrap.git
+[submodule "embedded-protocol"]
+	path = embedded-protocol
+	url = https://github.com/sass/embedded-protocol.git
