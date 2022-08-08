@@ -3,7 +3,8 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  name: Rustfmt
+  fmt:  
+    name: Rustfmt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -15,7 +16,8 @@ jobs:
           override: true
       - run: cargo fmt --all -- --check
 
-  name: Clippy
+  clippy:
+    name: Clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -27,7 +29,8 @@ jobs:
           override: true
       - run: cargo clippy --all-targets --all-features -- -D warnings
 
-  name: 'Tests | ${{ matrix.os }}'
+  test:
+    name: 'Tests | ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}-latest
 
     strategy:
