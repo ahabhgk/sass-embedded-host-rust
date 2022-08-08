@@ -9,7 +9,7 @@ use tempfile::TempDir;
 
 pub fn exe_path() -> std::path::PathBuf {
   std::path::PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
-    .join("sass_embedded")
+    .join("ext/sass/sass-embedded")
     .join("dart-sass-embedded")
 }
 
@@ -43,6 +43,7 @@ impl Sandbox {
   // cwd when legacy is on, so we need to run legacy tests in sequentially
   // by adding `--test-threads=1`
   #[cfg(feature = "legacy")]
+  #[allow(dead_code)]
   pub fn chdir(&self) -> ChdirGuard {
     let cwd = env::current_dir().unwrap();
     env::set_current_dir(self.path()).unwrap();

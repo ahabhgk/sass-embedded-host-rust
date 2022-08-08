@@ -389,7 +389,7 @@ mod compile_string {
           serde_json::from_str(&res.source_map.unwrap()).unwrap();
         assert!(source_map.get("sourcesContent").is_some());
         assert!(source_map["sourcesContent"].is_array());
-        assert!(source_map["sourcesContent"].as_array().unwrap().len() >= 1);
+        assert!(!source_map["sourcesContent"].as_array().unwrap().is_empty());
       }
     }
 

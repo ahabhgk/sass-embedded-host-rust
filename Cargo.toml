@@ -5,6 +5,7 @@ edition = "2021"
 resolver = "2"
 
 [features]
+default = []
 legacy = ["dep:regex", "dep:serde_json"]
 
 [dependencies]

@@ -144,7 +144,7 @@ mod the_imported_url {
 
       fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
         Ok(Some(ImporterResult {
-          contents: format!("a {{b: c}}"),
+          contents: "a {b: c}".to_string(),
           syntax: Syntax::Scss,
           source_map_url: None,
         }))
@@ -180,7 +180,7 @@ mod the_imported_url {
 
       fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
         Ok(Some(ImporterResult {
-          contents: format!("a {{b: c}}"),
+          contents: "a {b: c}".to_string(),
           syntax: Syntax::Scss,
           source_map_url: None,
         }))
@@ -219,7 +219,7 @@ fn uses_an_importer_is_source_map_url() {
       Ok(Some(ImporterResult {
         contents: format!(".{color} {{color: {color}}}"),
         syntax: Syntax::Scss,
-        source_map_url: Some(format!("u:blue")),
+        source_map_url: Some("u:blue".to_string()),
       }))
     }
   }
@@ -657,7 +657,7 @@ mod from_import_is {
         url: &str,
         options: &ImporterOptions,
       ) -> Result<Option<Url>> {
-        assert_eq!(options.from_import, true);
+        assert!(options.from_import);
         Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
       }
 
@@ -692,7 +692,7 @@ mod from_import_is {
         url: &str,
         options: &ImporterOptions,
       ) -> Result<Option<Url>> {
-        assert_eq!(options.from_import, false);
+        assert!(!options.from_import);
         Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
       }
 
@@ -727,7 +727,7 @@ mod from_import_is {
         url: &str,
         options: &ImporterOptions,
       ) -> Result<Option<Url>> {
-        assert_eq!(options.from_import, false);
+        assert!(!options.from_import);
         Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
       }
 
@@ -762,7 +762,7 @@ mod from_import_is {
         url: &str,
         options: &ImporterOptions,
       ) -> Result<Option<Url>> {
-        assert_eq!(options.from_import, false);
+        assert!(!options.from_import);
         Ok(Some(Url::parse(&format!("u:{url}")).unwrap()))
       }
 
@@ -1238,7 +1238,7 @@ mod file_importer {
         _: &str,
         options: &ImporterOptions,
       ) -> Result<Option<Url>> {
-        assert_eq!(options.from_import, true);
+        assert!(options.from_import);
         Ok(Some(self.sandbox.path().join("other").to_url()))
       }
     }
@@ -1272,7 +1272,7 @@ mod file_importer {
         _: &str,
         options: &ImporterOptions,
       ) -> Result<Option<Url>> {
-        assert_eq!(options.from_import, false);
+        assert!(!options.from_import);
         Ok(Some(self.sandbox.path().join("other").to_url()))
       }
     }
