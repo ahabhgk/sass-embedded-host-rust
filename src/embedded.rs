@@ -6,17 +6,15 @@ use crate::{
   channel::Channel,
   host::ImporterRegistry,
   host::{Host, LoggerRegistry},
-  protocol::{
-    inbound_message::{
-      compile_request::{Input, StringInput},
-      CompileRequest,
-    },
-    outbound_message::{
-      compile_response::{self, CompileSuccess},
-      CompileResponse,
-    },
+  protocol::inbound_message::{
+    compile_request::{Input, StringInput},
+    CompileRequest,
   },
-  Exception, Options, Result, StringOptions,
+  CompileResult, Options, Result, StringOptions,
+};
+#[cfg(feature = "legacy")]
+use crate::{
+  legacy::LEGACY_IMPORTER_PROTOCOL, protocol::inbound_message::compile_request,
 };
 
 #[derive(Debug)]
@@ -39,10 +37,7 @@ impl Embedded {
     let mut logger_registry = LoggerRegistry::default();
     let mut importer_registry = ImporterRegistry::default();
     let importers = importer_registry
-      .register_all(
-        options.importers.unwrap_or_default(),
-        options.load_paths.unwrap_or_default(),
-      )
+      .register_all(options.importers, options.load_paths)
       .collect();
     if let Some(l) = options.logger {
       logger_registry.register(l);
@@ -80,14 +75,43 @@ impl Embedded {
     let mut logger_registry = LoggerRegistry::default();
     let mut importer_registry = ImporterRegistry::default();
     let importers = importer_registry
-      .register_all(
-        options.common.importers.unwrap_or_default(),
-        options.common.load_paths.unwrap_or_default(),
-      )
+      .register_all(options.common.importers, options.common.load_paths)
       .collect();
     if let Some(l) = options.common.logger {
       logger_registry.register(l);
     }
+
+    #[cfg(feature = "legacy")]
+    let importer = if let Some(input_importer) = options.input_importer {
+      Some(importer_registry.register(input_importer))
+    } else if matches!(&options.url, Some(u) if u.to_string() == LEGACY_IMPORTER_PROTOCOL)
+    {
+      Some(compile_request::Importer {
+        importer: Some(compile_request::importer::Importer::Path(
+          std::env::current_dir()
+            .unwrap()
+            .to_string_lossy()
+            .to_string(),
+        )),
+      })
+    } else {
+      None
+    };
+
+    #[cfg(feature = "legacy")]
+    let url = options
+      .url
+      .map(|url| url.to_string())
+      .filter(|url| url != LEGACY_IMPORTER_PROTOCOL)
+      .unwrap_or_default();
+
+    #[cfg(not(feature = "legacy"))]
+    let importer = options
+      .input_importer
+      .map(|i| importer_registry.register(i));
+
+    #[cfg(not(feature = "legacy"))]
+    let url = options.url.map(|url| url.to_string()).unwrap_or_default();
 
     let request = CompileRequest {
       style: options.common.style as i32,
@@ -104,9 +128,9 @@ impl Embedded {
       importers,
       input: Some(Input::String(StringInput {
         source: source.into(),
-        url: options.url.map(|url| url.to_string()).unwrap_or_default(),
+        url,
         syntax: options.syntax as i32,
-        importer: options.importer.map(|i| importer_registry.register(i)),
+        importer,
       })),
       // id: set in compile_request
       // global_functions: not implemented
@@ -129,44 +153,5 @@ impl Embedded {
       "sass-embedded\t#{}",
       response.implementation_version
     ))
-  }
-}
-
-/// https://sass-lang.com/documentation/js-api/interfaces/CompileResult
-#[derive(Debug)]
-pub struct CompileResult {
-  /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#css
-  pub css: String,
-  /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#loadedUrls
-  pub loaded_urls: Vec<String>,
-  /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#sourceMap
-  pub source_map: Option<String>,
-}
-
-impl TryFrom<CompileResponse> for CompileResult {
-  type Error = Exception;
-
-  fn try_from(response: CompileResponse) -> Result<Self> {
-    let res = response.result.unwrap();
-    match res {
-      compile_response::Result::Success(success) => Ok(success.into()),
-      compile_response::Result::Failure(failure) => {
-        Err(Exception::from(failure))
-      }
-    }
-  }
-}
-
-impl From<CompileSuccess> for CompileResult {
-  fn from(s: CompileSuccess) -> Self {
-    Self {
-      css: s.css,
-      loaded_urls: s.loaded_urls,
-      source_map: if s.source_map.is_empty() {
-        None
-      } else {
-        Some(s.source_map)
-      },
-    }
   }
 }

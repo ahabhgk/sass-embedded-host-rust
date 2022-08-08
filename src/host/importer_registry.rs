@@ -1,7 +1,7 @@
 use rustc_hash::FxHashMap;
 
 use crate::{
-  options::{FileImporter, Importer, ImporterOptions, SassImporter},
+  api::{FileImporter, Importer, ImporterOptions, SassImporter},
   protocol::{
     inbound_message::{
       canonicalize_response, compile_request, file_import_response,
@@ -131,17 +131,16 @@ impl ImporterRegistry {
     ) {
       Ok(url) => FileImportResponse {
         id: request.id,
-        result: if let Some(url) = url {
+        result: url.map(|url| {
           if url.scheme() != "file" {
-            panic!(
+            file_import_response::Result::Error(format!(
               "FileImporter {:?} returned non-file: URL {} for URL {}.",
               importer, url, request.url
-            );
+            ))
+          } else {
+            file_import_response::Result::FileUrl(url.to_string())
           }
-          Some(file_import_response::Result::FileUrl(url.to_string()))
-        } else {
-          None
-        },
+        }),
       },
       Err(e) => FileImportResponse {
         id: request.id,
