@@ -10,6 +10,7 @@ use std::{
 
 use parking_lot::Mutex;
 use regex::Regex;
+use urlencoding::encode;
 
 use crate::{
   Exception, Importer, ImporterOptions, ImporterResult, Result, Syntax, Url,
@@ -131,13 +132,14 @@ impl Importer for Arc<LegacyImporterWrapper> {
             Url::parse(&format!(
               "{}{}",
               LEGACY_IMPORTER_PROTOCOL,
-              file.to_string_lossy()
+              encode(&file.to_string_lossy())
             ))
             .unwrap()
           } else if Regex::new("^[A-Za-z+.-]+:").unwrap().is_match(url) {
             Url::parse(url).unwrap()
           } else {
-            Url::parse(&format!("{}{}", LEGACY_IMPORTER_PROTOCOL, url)).unwrap()
+            Url::parse(&format!("{}{}", LEGACY_IMPORTER_PROTOCOL, encode(url)))
+              .unwrap()
           }))
         }
         LegacyImporterResult::File(file) => {

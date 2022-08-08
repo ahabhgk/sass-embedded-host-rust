@@ -4,6 +4,8 @@ use std::{
   time::{Duration, SystemTime},
 };
 
+use urlencoding::decode;
+
 use crate::{
   legacy::url_to_file_path_cross_platform, CompileResult, Options,
   StringOptions, Syntax, Url,
@@ -389,7 +391,7 @@ impl LegacyResult {
                 .to_string_lossy()
                 .to_string()
             } else if format!("{}:", url.scheme()) == LEGACY_IMPORTER_PROTOCOL {
-              url.path().to_string()
+              decode(url.path()).unwrap().to_string()
             } else {
               url.to_string()
             }

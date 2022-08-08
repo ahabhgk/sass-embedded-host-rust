@@ -85,7 +85,7 @@ async function getDartSassEmbedded(outPath, dirName) {
 
 async function getEmbeddedProtocol(outPath, dirName) {
 	const { stdout } = spawnSync(p.join(
-		`../ext/sass/${dirName}/dart-sass-embedded`,
+		`../ext/sass/${dirName}/dart-sass-embedded${OS === "windows" ? ".bat" : ""}`,
 	), ["--version"]);
 	const { protocolVersion } = JSON.parse(stdout.toString());
 	const assetUrl = `https://github.com/sass/embedded-protocol/raw/${protocolVersion}/embedded_sass.proto`;
