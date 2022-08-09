@@ -11,7 +11,11 @@ use crate::{Embedded, Importer, Options, Result, SassImporter, StringOptions};
 impl Embedded {
   pub fn render(&mut self, options: LegacyOptions) -> Result<LegacyResult> {
     let start = SystemTime::now();
-    let entry = options.file.clone();
+    let entry = options
+      .file
+      .clone()
+      .map(|file| file.to_str().unwrap().to_string())
+      .unwrap_or_else(|| "stdin".to_string());
     let mut options = options.adjust_options();
     let result = if let Some(data) = options.data.clone() {
       let this = LegacyPluginThis::new(&options);
@@ -21,7 +25,7 @@ impl Embedded {
             this,
             importers,
             options.include_paths.clone(),
-            options.file.clone().unwrap_or_else(|| "stdin".to_string()),
+            &entry,
           );
           let importers = vec![SassImporter::Importer(Box::new(Arc::clone(
             &wrapper,
@@ -48,7 +52,7 @@ impl Embedded {
             this,
             importers,
             options.include_paths.clone(),
-            options.file.clone().unwrap_or_else(|| "stdin".to_string()),
+            &entry,
           );
           let importers = vec![SassImporter::Importer(Box::new(Arc::clone(
             &wrapper,

@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -29,7 +31,7 @@ impl ImporterRegistry {
   pub fn register_all(
     &mut self,
     importers: Vec<SassImporter>,
-    load_paths: Vec<String>,
+    load_paths: Vec<PathBuf>,
   ) -> impl Iterator<Item = compile_request::Importer> + '_ {
     let load_paths: Vec<_> = self.register_load_paths(load_paths).collect();
     self.register_importers(importers).chain(load_paths)
@@ -46,10 +48,12 @@ impl ImporterRegistry {
 
   fn register_load_paths(
     &self,
-    load_paths: Vec<String>,
+    load_paths: Vec<PathBuf>,
   ) -> impl Iterator<Item = compile_request::Importer> + '_ {
     load_paths.into_iter().map(|p| {
-      let i = compile_request::importer::Importer::Path(p);
+      let i = compile_request::importer::Importer::Path(
+        p.to_str().unwrap().to_string(),
+      );
       compile_request::Importer { importer: Some(i) }
     })
   }
@@ -107,7 +111,10 @@ impl ImporterRegistry {
           Some(import_response::Result::Success(ImportSuccess {
             contents: result.contents,
             syntax: result.syntax as i32,
-            source_map_url: result.source_map_url.unwrap_or_default(),
+            source_map_url: result
+              .source_map_url
+              .map(|url| url.to_string())
+              .unwrap_or_default(),
           }))
         } else {
           None

@@ -1,4 +1,4 @@
-use std::ffi::OsStr;
+use std::{ffi::OsStr, path::Path};
 
 use atty::Stream;
 
@@ -31,7 +31,7 @@ impl Embedded {
 
   pub fn compile(
     &mut self,
-    path: impl Into<String>,
+    path: impl AsRef<Path>,
     options: Options,
   ) -> Result<CompileResult> {
     let mut logger_registry = LoggerRegistry::default();
@@ -55,7 +55,7 @@ impl Embedded {
       source_map_include_sources: options.source_map_include_sources,
       charset: options.charset,
       importers,
-      input: Some(Input::Path(path.into())),
+      input: Some(Input::Path(path.as_ref().to_str().unwrap().to_string())),
       // id: set in compile_request
       // global_functions: not implemented
       ..Default::default()
@@ -90,7 +90,8 @@ impl Embedded {
         importer: Some(compile_request::importer::Importer::Path(
           std::env::current_dir()
             .unwrap()
-            .to_string_lossy()
+            .to_str()
+            .unwrap()
             .to_string(),
         )),
       })
