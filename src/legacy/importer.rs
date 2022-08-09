@@ -269,7 +269,7 @@ struct PreviousUrl {
   path: bool,
 }
 
-pub fn url_to_file_path_cross_platform(file_url: &Url) -> PathBuf {
+pub(crate) fn url_to_file_path_cross_platform(file_url: &Url) -> PathBuf {
   let p = file_url
     .to_file_path()
     .unwrap()
