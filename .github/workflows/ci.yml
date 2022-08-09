@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['**']
+  pull_request:
+
+jobs:
+  fmt:  
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt
+          profile: minimal
+          override: true
+      - run: cargo fmt --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+      - run: |
+          cd scripts
+          npm install
+          node setup.mjs
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+          profile: minimal
+          override: true
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+
+  test:
+    name: 'Tests | ${{ matrix.os }}'
+    runs-on: ${{ matrix.os }}-latest
+
+    strategy:
+      matrix:
+        os: [ubuntu, macos, windows]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+      - name: setup sass-embedded
+        run: |
+          cd scripts
+          npm install
+          node setup.mjs
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 'stable'
+          profile: minimal
+          override: true
+      - name: test default features
+        run: cargo test -- --nocapture
+      - name: test legacy features
+        run: cargo test --features legacy -- --test-threads=1 --nocapture

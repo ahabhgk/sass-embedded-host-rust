@@ -4,12 +4,28 @@ use std::{
   path::{Path, PathBuf},
 };
 
-use sass_embedded_host_rust::Url;
+use sass_embedded_host_rust::{Sass, Url};
 use tempfile::TempDir;
 
+#[test]
+fn version_smoke() {
+  let mut sass = Sass::new(exe_path());
+  let info = sass.info().unwrap();
+  // !!! the crate's version should be the same as the embedded's version !!!
+  assert_eq!(info, "sass-embedded\t#1.54.3");
+}
+
+#[cfg(target_family = "windows")]
 pub fn exe_path() -> std::path::PathBuf {
   std::path::PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
-    .join("sass_embedded")
+    .join("ext/sass/sass-embedded")
+    .join("dart-sass-embedded.bat")
+}
+
+#[cfg(target_family = "unix")]
+pub fn exe_path() -> std::path::PathBuf {
+  std::path::PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
+    .join("ext/sass/sass-embedded")
     .join("dart-sass-embedded")
 }
 
@@ -43,6 +59,7 @@ impl Sandbox {
   // cwd when legacy is on, so we need to run legacy tests in sequentially
   // by adding `--test-threads=1`
   #[cfg(feature = "legacy")]
+  #[allow(dead_code)]
   pub fn chdir(&self) -> ChdirGuard {
     let cwd = env::current_dir().unwrap();
     env::set_current_dir(self.path()).unwrap();

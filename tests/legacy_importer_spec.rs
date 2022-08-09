@@ -1641,7 +1641,7 @@ mod this {
           _: &str,
         ) -> Result<Option<LegacyImporterResult>> {
           *self.count.lock() += 1;
-          assert_eq!(this.from_import, true);
+          assert!(this.from_import);
           Ok(Some(LegacyImporterResult::contents("")))
         }
       }
@@ -1676,7 +1676,7 @@ mod this {
           _: &str,
         ) -> Result<Option<LegacyImporterResult>> {
           *self.count.lock() += 1;
-          assert_eq!(this.from_import, false);
+          assert!(!this.from_import);
           Ok(Some(LegacyImporterResult::contents("")))
         }
       }
@@ -1711,7 +1711,7 @@ mod this {
           _: &str,
         ) -> Result<Option<LegacyImporterResult>> {
           *self.count.lock() += 1;
-          assert_eq!(this.from_import, false);
+          assert!(!this.from_import);
           Ok(Some(LegacyImporterResult::contents("")))
         }
       }
@@ -1746,7 +1746,7 @@ mod this {
           _: &str,
         ) -> Result<Option<LegacyImporterResult>> {
           *self.count.lock() += 1;
-          assert_eq!(this.from_import, false);
+          assert!(!this.from_import);
           Ok(Some(LegacyImporterResult::contents("")))
         }
       }
