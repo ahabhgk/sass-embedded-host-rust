@@ -101,7 +101,7 @@ mod compile_string {
             StringOptionsBuilder::default().url(url.clone()).build(),
           )
           .unwrap();
-        assert_eq!(res.loaded_urls, vec![url.to_string()]);
+        assert_eq!(res.loaded_urls, vec![url]);
       }
 
       #[test]
@@ -119,10 +119,7 @@ mod compile_string {
           .unwrap();
         assert_eq!(
           res.loaded_urls,
-          vec![
-            url.to_string(),
-            sandbox.path().join("_other.scss").to_url().to_string(),
-          ]
+          vec![url, sandbox.path().join("_other.scss").to_url(),]
         );
       }
 
@@ -144,9 +141,9 @@ mod compile_string {
         assert_eq!(
           res.loaded_urls,
           vec![
-            url.to_string(),
-            sandbox.path().join("_midstream.scss").to_url().to_string(),
-            sandbox.path().join("_upstream.scss").to_url().to_string(),
+            url,
+            sandbox.path().join("_midstream.scss").to_url(),
+            sandbox.path().join("_upstream.scss").to_url(),
           ]
         );
       }
@@ -173,10 +170,10 @@ mod compile_string {
           assert_eq!(
             res.loaded_urls,
             vec![
-              url.to_string(),
-              sandbox.path().join("_left.scss").to_url().to_string(),
-              sandbox.path().join("_upstream.scss").to_url().to_string(),
-              sandbox.path().join("_right.scss").to_url().to_string(),
+              url,
+              sandbox.path().join("_left.scss").to_url(),
+              sandbox.path().join("_upstream.scss").to_url(),
+              sandbox.path().join("_right.scss").to_url(),
             ]
           );
         }
@@ -200,10 +197,10 @@ mod compile_string {
           assert_eq!(
             res.loaded_urls,
             vec![
-              url.to_string(),
-              sandbox.path().join("_left.scss").to_url().to_string(),
-              sandbox.path().join("_upstream.scss").to_url().to_string(),
-              sandbox.path().join("_right.scss").to_url().to_string(),
+              url,
+              sandbox.path().join("_left.scss").to_url(),
+              sandbox.path().join("_upstream.scss").to_url(),
+              sandbox.path().join("_right.scss").to_url(),
             ]
           );
         }
@@ -240,7 +237,7 @@ mod compile_string {
           .compile_string(
             "@use \"other\";",
             StringOptionsBuilder::default()
-              .load_path(sandbox.path().join("foo/bar").to_string_lossy())
+              .load_path(sandbox.path().join("foo/bar"))
               .build(),
           )
           .unwrap();
@@ -257,7 +254,7 @@ mod compile_string {
           .compile_string(
             "@use \"bar/other\";",
             StringOptionsBuilder::default()
-              .load_path(sandbox.path().join("foo").to_string_lossy())
+              .load_path(sandbox.path().join("foo"))
               .build(),
           )
           .unwrap();
@@ -274,9 +271,9 @@ mod compile_string {
           .compile_string(
             "@use \"other\";",
             StringOptionsBuilder::default()
-              .load_path(sandbox.path().join("foo").to_string_lossy())
-              .load_path(sandbox.path().join("bar").to_string_lossy())
-              .load_path(sandbox.path().join("baz").to_string_lossy())
+              .load_path(sandbox.path().join("foo"))
+              .load_path(sandbox.path().join("bar"))
+              .load_path(sandbox.path().join("baz"))
               .build(),
           )
           .unwrap();
@@ -298,7 +295,7 @@ mod compile_string {
           .compile_string(
             "@use \"other\";",
             StringOptionsBuilder::default()
-              .load_path(sandbox.path().join("load-path").to_string_lossy())
+              .load_path(sandbox.path().join("load-path"))
               .url(sandbox.path().join("url/input.scss").to_url())
               .build(),
           )
@@ -318,8 +315,8 @@ mod compile_string {
           .compile_string(
             "@use \"other\";",
             StringOptionsBuilder::default()
-              .load_path(sandbox.path().join("earlier").to_string_lossy())
-              .load_path(sandbox.path().join("later").to_string_lossy())
+              .load_path(sandbox.path().join("earlier"))
+              .load_path(sandbox.path().join("later"))
               .build(),
           )
           .unwrap();
@@ -517,10 +514,7 @@ mod compile {
 
       let mut sass = Sass::new(exe_path());
       let res = sass
-        .compile(
-          sandbox.path().join("input.scss").to_string_lossy(),
-          Options::default(),
-        )
+        .compile(sandbox.path().join("input.scss"), Options::default())
         .unwrap();
       assert_eq!(res.css, "c {\n  d: b;\n}");
     }
@@ -532,10 +526,7 @@ mod compile {
 
       let mut sass = Sass::new(exe_path());
       let res = sass
-        .compile(
-          sandbox.path().join("input.asdf").to_string_lossy(),
-          Options::default(),
-        )
+        .compile(sandbox.path().join("input.asdf"), Options::default())
         .unwrap();
       assert_eq!(res.css, "c {\n  d: b;\n}");
     }
@@ -547,10 +538,7 @@ mod compile {
 
       let mut sass = Sass::new(exe_path());
       let res = sass
-        .compile(
-          sandbox.path().join("input.sass").to_string_lossy(),
-          Options::default(),
-        )
+        .compile(sandbox.path().join("input.sass"), Options::default())
         .unwrap();
       assert_eq!(res.css, "a {\n  b: c;\n}");
     }
@@ -562,10 +550,7 @@ mod compile {
 
       let mut sass = Sass::new(exe_path());
       let res = sass
-        .compile(
-          sandbox.path().join("input.css").to_string_lossy(),
-          Options::default(),
-        )
+        .compile(sandbox.path().join("input.css"), Options::default())
         .unwrap();
       assert_eq!(res.css, "a {\n  b: c;\n}");
     }
@@ -580,14 +565,11 @@ mod compile {
 
         let mut sass = Sass::new(exe_path());
         let res = sass
-          .compile(
-            sandbox.path().join("input.scss").to_string_lossy(),
-            Options::default(),
-          )
+          .compile(sandbox.path().join("input.scss"), Options::default())
           .unwrap();
         assert_eq!(
           res.loaded_urls,
-          vec![sandbox.path().join("input.scss").to_url().to_string()]
+          vec![sandbox.path().join("input.scss").to_url()]
         );
       }
 
@@ -598,14 +580,11 @@ mod compile {
 
         let mut sass = Sass::new(exe_path());
         let res = sass
-          .compile(
-            sandbox.path().join("input.scss").to_string_lossy(),
-            Options::default(),
-          )
+          .compile(sandbox.path().join("input.scss"), Options::default())
           .unwrap();
         assert_eq!(
           res.loaded_urls,
-          vec![sandbox.path().join("input.scss").to_url().to_string()]
+          vec![sandbox.path().join("input.scss").to_url()]
         );
       }
 
@@ -618,16 +597,13 @@ mod compile {
 
         let mut sass = Sass::new(exe_path());
         let res = sass
-          .compile(
-            sandbox.path().join("input.scss").to_string_lossy(),
-            Options::default(),
-          )
+          .compile(sandbox.path().join("input.scss"), Options::default())
           .unwrap();
         assert_eq!(
           res.loaded_urls,
           vec![
-            sandbox.path().join("input.scss").to_url().to_string(),
-            sandbox.path().join("_other.scss").to_url().to_string()
+            sandbox.path().join("input.scss").to_url(),
+            sandbox.path().join("_other.scss").to_url(),
           ]
         );
       }
@@ -643,7 +619,7 @@ mod compile {
       let mut sass = Sass::new(exe_path());
       let res = sass
         .compile(
-          sandbox.path().join("foo/bar/input.scss").to_string_lossy(),
+          sandbox.path().join("foo/bar/input.scss"),
           Options::default(),
         )
         .unwrap();
@@ -663,9 +639,9 @@ mod compile {
         let mut sass = Sass::new(exe_path());
         let res = sass
           .compile(
-            sandbox.path().join("input.scss").to_string_lossy(),
+            sandbox.path().join("input.scss"),
             OptionsBuilder::default()
-              .load_path(sandbox.path().join("foo/bar").to_string_lossy())
+              .load_path(sandbox.path().join("foo/bar"))
               .build(),
           )
           .unwrap();
@@ -686,9 +662,9 @@ mod compile {
         let mut sass = Sass::new(exe_path());
         let res = sass
           .compile(
-            sandbox.path().join("url/input.scss").to_string_lossy(),
+            sandbox.path().join("url/input.scss"),
             OptionsBuilder::default()
-              .load_path(sandbox.path().join("load-path").to_string_lossy())
+              .load_path(sandbox.path().join("load-path"))
               .build(),
           )
           .unwrap();
@@ -707,10 +683,7 @@ mod compile {
 
       let mut sass = Sass::new(exe_path());
       let err = sass
-        .compile(
-          sandbox.path().join("input.css").to_string_lossy(),
-          Options::default(),
-        )
+        .compile(sandbox.path().join("input.css"), Options::default())
         .unwrap_err();
       assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
       assert_eq!(
@@ -729,10 +702,7 @@ mod compile {
 
         let mut sass = Sass::new(exe_path());
         let err = sass
-          .compile(
-            sandbox.path().join("input.css").to_string_lossy(),
-            Options::default(),
-          )
+          .compile(sandbox.path().join("input.css"), Options::default())
           .unwrap_err();
         assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
         assert_eq!(
@@ -748,10 +718,7 @@ mod compile {
 
         let mut sass = Sass::new(exe_path());
         let err = sass
-          .compile(
-            sandbox.path().join("input.css").to_string_lossy(),
-            Options::default(),
-          )
+          .compile(sandbox.path().join("input.css"), Options::default())
           .unwrap_err();
         assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
         assert_eq!(

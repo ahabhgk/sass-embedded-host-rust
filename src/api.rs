@@ -1,4 +1,7 @@
-use std::fmt::Debug;
+use std::{
+  fmt::Debug,
+  path::{Path, PathBuf},
+};
 
 use crate::{
   protocol::{
@@ -23,7 +26,7 @@ pub struct Options {
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#importers
   pub importers: Vec<SassImporter>,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#loadPaths
-  pub load_paths: Vec<String>,
+  pub load_paths: Vec<PathBuf>,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#logger
   pub logger: Option<SassLogger>,
   /// https://sass-lang.com/documentation/js-api/interfaces/Options#quietDeps
@@ -82,13 +85,14 @@ impl OptionsBuilder {
     self
   }
 
-  pub fn load_paths(mut self, arg: impl IntoIterator<Item = String>) -> Self {
-    self.options.load_paths = arg.into_iter().collect();
+  pub fn load_paths(mut self, arg: &[impl AsRef<Path>]) -> Self {
+    self.options.load_paths =
+      arg.into_iter().map(|p| p.as_ref().to_owned()).collect();
     self
   }
 
-  pub fn load_path(mut self, arg: impl Into<String>) -> Self {
-    self.options.load_paths.push(arg.into());
+  pub fn load_path(mut self, arg: impl AsRef<Path>) -> Self {
+    self.options.load_paths.push(arg.as_ref().to_owned());
     self
   }
 
@@ -134,28 +138,24 @@ impl OptionsBuilder {
 
   pub fn sass_importers(
     mut self,
-    arg: impl IntoIterator<Item = SassImporter>,
+    arg: impl IntoIterator<Item = impl Into<SassImporter>>,
   ) -> Self {
-    self.options.importers = arg.into_iter().collect();
+    self.options.importers = arg.into_iter().map(|i| i.into()).collect();
     self
   }
 
-  pub fn importer(mut self, arg: impl Into<Box<dyn Importer>>) -> Self {
+  pub fn importer<I: 'static + Importer>(mut self, arg: I) -> Self {
     self
       .options
       .importers
-      .push(SassImporter::Importer(arg.into()));
+      .push(SassImporter::Importer(Box::new(arg) as Box<dyn Importer>));
     self
   }
 
-  pub fn file_importer(
-    mut self,
-    arg: impl Into<Box<dyn FileImporter>>,
-  ) -> Self {
-    self
-      .options
-      .importers
-      .push(SassImporter::FileImporter(arg.into()));
+  pub fn file_importer<I: 'static + FileImporter>(mut self, arg: I) -> Self {
+    self.options.importers.push(SassImporter::FileImporter(
+      Box::new(arg) as Box<dyn FileImporter>
+    ));
     self
   }
 }
@@ -201,16 +201,16 @@ impl StringOptionsBuilder {
     self
   }
 
-  pub fn input_importer(mut self, arg: impl Into<Box<dyn Importer>>) -> Self {
-    self.input_importer = Some(SassImporter::Importer(arg.into()));
+  pub fn input_importer<I: 'static + Importer>(mut self, arg: I) -> Self {
+    self.input_importer = Some(SassImporter::Importer(Box::new(arg)));
     self
   }
 
-  pub fn input_file_importer(
+  pub fn input_file_importer<I: 'static + FileImporter>(
     mut self,
-    arg: impl Into<Box<dyn FileImporter>>,
+    arg: I,
   ) -> Self {
-    self.input_importer = Some(SassImporter::FileImporter(arg.into()));
+    self.input_importer = Some(SassImporter::FileImporter(Box::new(arg)));
     self
   }
 
@@ -234,13 +234,14 @@ impl StringOptionsBuilder {
     self
   }
 
-  pub fn load_paths(mut self, arg: impl IntoIterator<Item = String>) -> Self {
-    self.options.load_paths = arg.into_iter().collect();
+  pub fn load_paths(mut self, arg: &[impl AsRef<Path>]) -> Self {
+    self.options.load_paths =
+      arg.into_iter().map(|p| p.as_ref().to_owned()).collect();
     self
   }
 
-  pub fn load_path(mut self, arg: impl Into<String>) -> Self {
-    self.options.load_paths.push(arg.into());
+  pub fn load_path(mut self, arg: impl AsRef<Path>) -> Self {
+    self.options.load_paths.push(arg.as_ref().to_owned());
     self
   }
 
@@ -286,28 +287,25 @@ impl StringOptionsBuilder {
 
   pub fn sass_importers(
     mut self,
-    arg: impl IntoIterator<Item = SassImporter>,
+    arg: impl IntoIterator<Item = impl Into<SassImporter>>,
   ) -> Self {
-    self.options.importers = arg.into_iter().collect();
+    self.options.importers = arg.into_iter().map(|i| i.into()).collect();
     self
   }
 
-  pub fn importer(mut self, arg: impl Into<Box<dyn Importer>>) -> Self {
+  pub fn importer<I: 'static + Importer>(mut self, arg: I) -> Self {
     self
       .options
       .importers
-      .push(SassImporter::Importer(arg.into()));
+      .push(SassImporter::Importer(Box::new(arg)));
     self
   }
 
-  pub fn file_importer(
-    mut self,
-    arg: impl Into<Box<dyn FileImporter>>,
-  ) -> Self {
+  pub fn file_importer<I: 'static + FileImporter>(mut self, arg: I) -> Self {
     self
       .options
       .importers
-      .push(SassImporter::FileImporter(arg.into()));
+      .push(SassImporter::FileImporter(Box::new(arg)));
     self
   }
 }
@@ -368,7 +366,7 @@ pub struct ImporterResult {
   /// https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#contents
   pub contents: String,
   /// https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#sourceMapUrl
-  pub source_map_url: Option<String>,
+  pub source_map_url: Option<Url>,
   /// https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#syntax
   pub syntax: Syntax,
 }
@@ -379,7 +377,7 @@ pub struct CompileResult {
   /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#css
   pub css: String,
   /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#loadedUrls
-  pub loaded_urls: Vec<String>,
+  pub loaded_urls: Vec<Url>,
   /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#sourceMap
   pub source_map: Option<String>,
 }
@@ -402,7 +400,11 @@ impl From<CompileSuccess> for CompileResult {
   fn from(s: CompileSuccess) -> Self {
     Self {
       css: s.css,
-      loaded_urls: s.loaded_urls,
+      loaded_urls: s
+        .loaded_urls
+        .iter()
+        .map(|url| Url::parse(url).unwrap())
+        .collect(),
       source_map: if s.source_map.is_empty() {
         None
       } else {

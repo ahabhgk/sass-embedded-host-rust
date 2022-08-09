@@ -73,9 +73,9 @@ fn imports_cascade_through_importers() {
     .render(
       LegacyOptionsBuilder::default()
         .data("@import 'foo'")
-        .importer(Box::new(FooImporter) as Box<dyn LegacyImporter>)
-        .importer(Box::new(BarImporter) as Box<dyn LegacyImporter>)
-        .importer(Box::new(BazImporter) as Box<dyn LegacyImporter>)
+        .importer(FooImporter)
+        .importer(BarImporter)
+        .importer(BazImporter)
         .build(),
     )
     .unwrap();
@@ -106,7 +106,7 @@ fn an_empty_object_means_an_empty_file() {
     .render(
       LegacyOptionsBuilder::default()
         .data("@import 'foo'")
-        .importer(Box::new(EmptyImporter) as Box<dyn LegacyImporter>)
+        .importer(EmptyImporter)
         .build(),
     )
     .unwrap();
@@ -144,8 +144,8 @@ mod import_precedence {
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
-            .file(sandbox.path().join("sub/base.scss").to_string_lossy())
-            .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+            .file(sandbox.path().join("sub/base.scss"))
+            .importer(MyImporter)
             .build(),
         )
         .unwrap();
@@ -176,7 +176,7 @@ mod import_precedence {
         .render(
           LegacyOptionsBuilder::default()
             .data("@import \"test\"")
-            .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+            .importer(MyImporter)
             .build(),
         )
         .unwrap();
@@ -195,7 +195,7 @@ mod import_precedence {
         .render(
           LegacyOptionsBuilder::default()
             .data("@import \"test\"")
-            .include_path(sandbox.path().join("sub").to_string_lossy())
+            .include_path(sandbox.path().join("sub"))
             .build(),
         )
         .unwrap();
@@ -213,7 +213,7 @@ mod import_precedence {
         .render(
           LegacyOptionsBuilder::default()
             .data("@import \"test\"")
-            .include_path(sandbox.path().to_string_lossy())
+            .include_path(sandbox.path())
             .build(),
         )
         .unwrap();
@@ -246,7 +246,7 @@ mod with_contents {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .importer(MyImporter)
           .build(),
       )
       .unwrap();
@@ -282,7 +282,7 @@ mod with_contents {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"test\"")
-          .importer(Box::new(MyImporter { sandbox }) as Box<dyn LegacyImporter>)
+          .importer(MyImporter { sandbox })
           .build(),
       )
       .unwrap();
@@ -310,7 +310,7 @@ mod with_contents {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .importer(MyImporter)
           .build(),
       )
       .unwrap();
@@ -342,15 +342,14 @@ mod with_contents {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter { file: file.clone() })
-            as Box<dyn LegacyImporter>)
+          .importer(MyImporter { file: file.clone() })
           .build(),
       )
       .unwrap();
     assert!(res
       .stats
       .included_files
-      .contains(&file.to_string_lossy().to_string()));
+      .contains(&file.to_str().unwrap().to_string()));
   }
 }
 
@@ -385,7 +384,7 @@ mod with_a_file_redirect {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter { sandbox }) as Box<dyn LegacyImporter>)
+          .importer(MyImporter { sandbox })
           .build(),
       )
       .unwrap();
@@ -420,7 +419,7 @@ mod with_a_file_redirect {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter { sandbox }) as Box<dyn LegacyImporter>)
+          .importer(MyImporter { sandbox })
           .build(),
       )
       .unwrap();
@@ -455,7 +454,7 @@ mod with_a_file_redirect {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter { sandbox }) as Box<dyn LegacyImporter>)
+          .importer(MyImporter { sandbox })
           .build(),
       )
       .unwrap();
@@ -490,7 +489,7 @@ mod with_a_file_redirect {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter { sandbox }) as Box<dyn LegacyImporter>)
+          .importer(MyImporter { sandbox })
           .build(),
       )
       .unwrap();
@@ -530,7 +529,7 @@ mod with_a_file_redirect {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter { sandbox }) as Box<dyn LegacyImporter>)
+          .importer(MyImporter { sandbox })
           .build(),
       )
       .unwrap();
@@ -570,7 +569,7 @@ mod with_a_file_redirect {
       .render(
         LegacyOptionsBuilder::default()
           .data("@use \"foo\"; @import \"foo\"")
-          .importer(Box::new(MyImporter { sandbox }) as Box<dyn LegacyImporter>)
+          .importer(MyImporter { sandbox })
           .build(),
       )
       .unwrap();
@@ -608,7 +607,7 @@ mod with_a_file_redirect {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter { sandbox }) as Box<dyn LegacyImporter>)
+          .importer(MyImporter { sandbox })
           .build(),
       )
       .unwrap();
@@ -640,8 +639,8 @@ mod with_a_file_redirect {
     let res = sass
       .render(
         LegacyOptionsBuilder::default()
-          .file(sandbox.path().join("test.scss").to_string_lossy())
-          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .file(sandbox.path().join("test.scss"))
+          .importer(MyImporter)
           .build(),
       )
       .unwrap();
@@ -675,19 +674,19 @@ mod with_a_file_redirect {
     let res = sass
       .render(
         LegacyOptionsBuilder::default()
-          .file(sandbox.path().join("test.scss").to_string_lossy())
-          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .file(sandbox.path().join("test.scss"))
+          .importer(MyImporter)
           .build(),
       )
       .unwrap();
     assert!(res
       .stats
       .included_files
-      .contains(&test.to_string_lossy().to_string()));
+      .contains(&test.to_str().unwrap().to_string()));
     assert!(res
       .stats
       .included_files
-      .contains(&other.to_string_lossy().to_string()));
+      .contains(&other.to_str().unwrap().to_string()));
   }
 
   #[test]
@@ -714,8 +713,8 @@ mod with_a_file_redirect {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .include_path(sandbox.path().to_string_lossy())
-          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .include_path(sandbox.path())
+          .importer(MyImporter)
           .build(),
       )
       .unwrap();
@@ -751,9 +750,9 @@ mod with_a_file_redirect {
     let res = sass
       .render(
         LegacyOptionsBuilder::default()
-          .file(sandbox.path().join("test.scss").to_string_lossy())
-          .include_path(sandbox.path().join("sub").to_string_lossy())
-          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .file(sandbox.path().join("test.scss"))
+          .include_path(sandbox.path().join("sub"))
+          .importer(MyImporter)
           .build(),
       )
       .unwrap();
@@ -787,7 +786,7 @@ mod with_a_file_redirect {
         .render(
           LegacyOptionsBuilder::default()
             .data("@import \"foo\"")
-            .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+            .importer(MyImporter)
             .build(),
         )
         .unwrap();
@@ -820,8 +819,8 @@ mod with_a_file_redirect {
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
-            .file(sandbox.path().join("sub/test.scss").to_string_lossy())
-            .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+            .file(sandbox.path().join("sub/test.scss"))
+            .importer(MyImporter)
             .build(),
         )
         .unwrap();
@@ -857,9 +856,9 @@ mod with_a_file_redirect {
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
-            .file(sandbox.path().join("test.scss").to_string_lossy())
-            .include_path(sandbox.path().join("sub").to_string_lossy())
-            .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+            .file(sandbox.path().join("test.scss"))
+            .include_path(sandbox.path().join("sub"))
+            .importer(MyImporter)
             .build(),
         )
         .unwrap();
@@ -897,9 +896,9 @@ mod the_imported_url {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter {
+          .importer(MyImporter {
             count: Arc::clone(&count),
-          }) as Box<dyn LegacyImporter>)
+          })
           .build(),
       )
       .unwrap();
@@ -935,9 +934,9 @@ mod the_imported_url {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo/bar\"")
-          .importer(Box::new(MyImporter {
+          .importer(MyImporter {
             count: Arc::clone(&count),
-          }) as Box<dyn LegacyImporter>)
+          })
           .build(),
       )
       .unwrap();
@@ -965,7 +964,7 @@ mod the_imported_url {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .importer(MyImporter)
           .build(),
       )
       .unwrap();
@@ -998,9 +997,9 @@ mod the_imported_url {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"/foo\"")
-          .importer(Box::new(MyImporter {
+          .importer(MyImporter {
             count: Arc::clone(&count),
-          }) as Box<dyn LegacyImporter>)
+          })
           .build(),
       )
       .unwrap();
@@ -1034,9 +1033,9 @@ mod the_imported_url {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"/foo/bar/baz\"")
-          .importer(Box::new(MyImporter {
+          .importer(MyImporter {
             count: Arc::clone(&count),
-          }) as Box<dyn LegacyImporter>)
+          })
           .build(),
       )
       .unwrap();
@@ -1069,9 +1068,9 @@ mod the_imported_url {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"C:/foo\"")
-          .importer(Box::new(MyImporter {
+          .importer(MyImporter {
             count: Arc::clone(&count),
-          }) as Box<dyn LegacyImporter>)
+          })
           .build(),
       )
       .unwrap();
@@ -1103,7 +1102,8 @@ mod the_previous_url {
           env::current_dir()
             .unwrap()
             .join(self.sandbox.path().join("test.scss"))
-            .to_string_lossy()
+            .to_str()
+            .unwrap()
         );
         Ok(Some(LegacyImporterResult::contents("")))
       }
@@ -1117,11 +1117,11 @@ mod the_previous_url {
     let _ = sass
       .render(
         LegacyOptionsBuilder::default()
-          .file(sandbox.path().join("test.scss").to_string_lossy())
-          .importer(Box::new(MyImporter {
+          .file(sandbox.path().join("test.scss"))
+          .importer(MyImporter {
             sandbox,
             count: Arc::clone(&count),
-          }) as Box<dyn LegacyImporter>)
+          })
           .build(),
       )
       .unwrap();
@@ -1150,7 +1150,7 @@ mod the_previous_url {
         assert_eq!(url, "baz");
         assert_eq!(
           prev,
-          self.sandbox.path().join("_other.scss").to_string_lossy()
+          self.sandbox.path().join("_other.scss").to_str().unwrap()
         );
         Ok(Some(LegacyImporterResult::contents("")))
       }
@@ -1166,11 +1166,11 @@ mod the_previous_url {
     let _ = sass
       .render(
         LegacyOptionsBuilder::default()
-          .file(sandbox.path().join("test.scss").to_string_lossy())
-          .importer(Box::new(MyImporter {
+          .file(sandbox.path().join("test.scss"))
+          .importer(MyImporter {
             sandbox,
             count: Arc::clone(&count),
-          }) as Box<dyn LegacyImporter>)
+          })
           .build(),
       )
       .unwrap();
@@ -1203,9 +1203,9 @@ mod the_previous_url {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter {
+          .importer(MyImporter {
             count: Arc::clone(&count),
-          }) as Box<dyn LegacyImporter>)
+          })
           .build(),
       )
       .unwrap();
@@ -1261,12 +1261,12 @@ mod the_previous_url {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter1 {
+          .importer(MyImporter1 {
             count: Arc::clone(&count1),
-          }) as Box<dyn LegacyImporter>)
-          .importer(Box::new(MyImporter2 {
+          })
+          .importer(MyImporter2 {
             count: Arc::clone(&count2),
-          }) as Box<dyn LegacyImporter>)
+          })
           .build(),
       )
       .unwrap();
@@ -1294,7 +1294,7 @@ mod the_previous_url {
         assert_eq!(url, "importer");
         assert_eq!(
           prev,
-          self.sandbox.path().join("test.scss").to_string_lossy()
+          self.sandbox.path().join("test.scss").to_str().unwrap()
         );
         Ok(Some(LegacyImporterResult::contents("a {b: importer}")))
       }
@@ -1313,11 +1313,11 @@ mod the_previous_url {
     let res = sass
       .render(
         LegacyOptionsBuilder::default()
-          .file(sandbox.path().join("test.scss").to_string_lossy())
-          .importer(Box::new(MyImporter {
+          .file(sandbox.path().join("test.scss"))
+          .importer(MyImporter {
             sandbox,
             count: Arc::clone(&count),
-          }) as Box<dyn LegacyImporter>)
+          })
           .build(),
       )
       .unwrap();
@@ -1350,7 +1350,7 @@ mod this {
         let options = &this.options;
         assert_eq!(
           options.include_paths,
-          std::env::current_dir().unwrap().to_string_lossy()
+          std::env::current_dir().unwrap().to_str().unwrap()
         );
         assert_eq!(options.precision, 10);
         assert_eq!(options.style, 1);
@@ -1367,9 +1367,9 @@ mod this {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter {
+          .importer(MyImporter {
             count: Arc::clone(&count),
-          }) as Box<dyn LegacyImporter>)
+          })
           .build(),
       )
       .unwrap();
@@ -1405,9 +1405,9 @@ mod this {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter {
+          .importer(MyImporter {
             count: Arc::clone(&count),
-          }) as Box<dyn LegacyImporter>)
+          })
           .build(),
       )
       .unwrap();
@@ -1434,7 +1434,7 @@ mod this {
         assert!(options.file.is_some());
         assert_eq!(
           options.file.as_ref().unwrap(),
-          &self.sandbox.path().join("test.scss").to_string_lossy()
+          &self.sandbox.path().join("test.scss")
         );
         Ok(Some(LegacyImporterResult::contents("")))
       }
@@ -1448,11 +1448,11 @@ mod this {
     let _ = sass
       .render(
         LegacyOptionsBuilder::default()
-          .file(sandbox.path().join("test.scss").to_string_lossy())
-          .importer(Box::new(MyImporter {
+          .file(sandbox.path().join("test.scss"))
+          .importer(MyImporter {
             sandbox,
             count: Arc::clone(&count),
-          }) as Box<dyn LegacyImporter>)
+          })
           .build(),
       )
       .unwrap();
@@ -1477,25 +1477,25 @@ mod this {
         *self.count.lock() += 1;
         assert!(this.options.include_paths.contains(&format!(
           "{}{PATH_DELIMITER}{}",
-          std::env::current_dir().unwrap().to_string_lossy(),
-          self.sandbox.path().to_string_lossy()
+          std::env::current_dir().unwrap().to_str().unwrap(),
+          self.sandbox.path().to_str().unwrap(),
         )));
         Ok(Some(LegacyImporterResult::contents("")))
       }
     }
 
     let sandbox = Sandbox::default();
-    let root = sandbox.path().to_string_lossy().to_string();
+    let root = sandbox.path().to_str().unwrap().to_string();
     let mut sass = Sass::new(exe_path());
     let count = Arc::new(Mutex::new(0));
     let _ = sass
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter {
+          .importer(MyImporter {
             sandbox,
             count: Arc::clone(&count),
-          }) as Box<dyn LegacyImporter>)
+          })
           .include_path(root)
           .build(),
       )
@@ -1534,10 +1534,10 @@ mod this {
         .render(
           LegacyOptionsBuilder::default()
             .data("@import \"foo\"")
-            .importer(Box::new(MyImporter {
+            .importer(MyImporter {
               start,
               count: Arc::clone(&count),
-            }) as Box<dyn LegacyImporter>)
+            })
             .build(),
         )
         .unwrap();
@@ -1570,9 +1570,9 @@ mod this {
         .render(
           LegacyOptionsBuilder::default()
             .data("@import \"foo\"")
-            .importer(Box::new(MyImporter {
+            .importer(MyImporter {
               count: Arc::clone(&count),
-            }) as Box<dyn LegacyImporter>)
+            })
             .build(),
         )
         .unwrap();
@@ -1597,7 +1597,7 @@ mod this {
           *self.count.lock() += 1;
           assert_eq!(
             this.options.result.stats.entry,
-            self.sandbox.path().join("test.scss").to_string_lossy()
+            self.sandbox.path().join("test.scss").to_str().unwrap()
           );
           Ok(Some(LegacyImporterResult::contents("")))
         }
@@ -1611,11 +1611,11 @@ mod this {
       let _ = sass
         .render(
           LegacyOptionsBuilder::default()
-            .file(sandbox.path().join("test.scss").to_string_lossy())
-            .importer(Box::new(MyImporter {
+            .file(sandbox.path().join("test.scss"))
+            .importer(MyImporter {
               sandbox,
               count: Arc::clone(&count),
-            }) as Box<dyn LegacyImporter>)
+            })
             .build(),
         )
         .unwrap();
@@ -1652,9 +1652,9 @@ mod this {
         .render(
           LegacyOptionsBuilder::default()
             .data("@import \"foo\"")
-            .importer(Box::new(MyImporter {
+            .importer(MyImporter {
               count: Arc::clone(&count),
-            }) as Box<dyn LegacyImporter>)
+            })
             .build(),
         )
         .unwrap();
@@ -1687,9 +1687,9 @@ mod this {
         .render(
           LegacyOptionsBuilder::default()
             .data("@use \"foo\"")
-            .importer(Box::new(MyImporter {
+            .importer(MyImporter {
               count: Arc::clone(&count),
-            }) as Box<dyn LegacyImporter>)
+            })
             .build(),
         )
         .unwrap();
@@ -1722,9 +1722,9 @@ mod this {
         .render(
           LegacyOptionsBuilder::default()
             .data("@forward \"foo\"")
-            .importer(Box::new(MyImporter {
+            .importer(MyImporter {
               count: Arc::clone(&count),
-            }) as Box<dyn LegacyImporter>)
+            })
             .build(),
         )
         .unwrap();
@@ -1757,9 +1757,9 @@ mod this {
         .render(
           LegacyOptionsBuilder::default()
             .data("@use \"sass:meta\"; @include meta.load-css(\"foo\")")
-            .importer(Box::new(MyImporter {
+            .importer(MyImporter {
               count: Arc::clone(&count),
-            }) as Box<dyn LegacyImporter>)
+            })
             .build(),
         )
         .unwrap();
@@ -1792,7 +1792,7 @@ mod gracefully_handles_an_error_when {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .importer(MyImporter)
           .build(),
       )
       .unwrap_err();
@@ -1820,7 +1820,7 @@ mod gracefully_handles_an_error_when {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .importer(MyImporter)
           .build(),
       )
       .unwrap_err();
@@ -1848,7 +1848,7 @@ mod gracefully_handles_an_error_when {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo\"")
-          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .importer(MyImporter)
           .build(),
       )
       .unwrap_err();
@@ -1876,7 +1876,7 @@ mod gracefully_handles_an_error_when {
       .render(
         LegacyOptionsBuilder::default()
           .data("@import \"foo:bar\"")
-          .importer(Box::new(MyImporter) as Box<dyn LegacyImporter>)
+          .importer(MyImporter)
           .build(),
       )
       .unwrap_err();

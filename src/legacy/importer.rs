@@ -32,6 +32,12 @@ pub trait LegacyImporter: Debug + Sync + Send {
 
 pub type SassLegacyImporter = Box<dyn LegacyImporter>;
 
+impl<I: 'static + LegacyImporter> From<I> for SassLegacyImporter {
+  fn from(importer: I) -> Self {
+    Box::new(importer)
+  }
+}
+
 #[derive(Debug)]
 pub struct LegacyImporterWrapper {
   prev_stack: Mutex<Vec<PreviousUrl>>,
@@ -39,21 +45,21 @@ pub struct LegacyImporterWrapper {
   expecting_relative_load: Mutex<bool>,
   callbacks: Vec<SassLegacyImporter>,
   this: LegacyPluginThis,
-  load_paths: Vec<String>,
+  load_paths: Vec<PathBuf>,
 }
 
 impl LegacyImporterWrapper {
   pub fn new(
     this: LegacyPluginThis,
     callbacks: Vec<SassLegacyImporter>,
-    load_paths: Vec<String>,
-    initial_prev: String,
+    load_paths: Vec<PathBuf>,
+    initial_prev: &str,
   ) -> Arc<Self> {
     let path = initial_prev != "stdin";
     Arc::new(Self {
       prev_stack: Mutex::new(vec![PreviousUrl {
         url: if path {
-          initial_prev
+          initial_prev.to_string()
         } else {
           "stdin".to_string()
         },
@@ -148,14 +154,10 @@ impl Importer for Arc<LegacyImporterWrapper> {
             Ok(resolved.map(|p| Url::from_file_path(p).unwrap()))
           } else {
             let mut prefixes = VecDeque::from(self.load_paths.clone());
-            prefixes.push_back(".".to_owned());
+            prefixes.push_back(PathBuf::from("."));
             if prev.path {
               prefixes.push_front(
-                Path::new(&prev.url)
-                  .parent()
-                  .unwrap()
-                  .to_string_lossy()
-                  .to_string(),
+                Path::new(&prev.url).parent().unwrap().to_path_buf(),
               );
             }
             let mut resolved = None;
@@ -208,7 +210,7 @@ impl Importer for Arc<LegacyImporterWrapper> {
       self.prev_stack.lock().pop();
       return Ok(Some(ImporterResult {
         contents: String::new(),
-        source_map_url: Some(END_OF_LOAD_PROTOCOL.to_string()),
+        source_map_url: Some(Url::parse(END_OF_LOAD_PROTOCOL).unwrap()),
         syntax: Syntax::Scss,
       }));
     }
@@ -245,7 +247,7 @@ impl Importer for Arc<LegacyImporterWrapper> {
       return Ok(Some(ImporterResult {
         contents,
         syntax,
-        source_map_url: Some(canonical_url.to_string()),
+        source_map_url: Some(canonical_url.clone()),
       }));
     }
     let mut last_contents = self.last_contents.lock();
@@ -258,7 +260,7 @@ impl Importer for Arc<LegacyImporterWrapper> {
     Ok(Some(ImporterResult {
       contents,
       syntax: Syntax::Scss,
-      source_map_url: Some(canonical_url.to_string()),
+      source_map_url: Some(canonical_url.clone()),
     }))
   }
 }

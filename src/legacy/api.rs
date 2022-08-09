@@ -1,6 +1,6 @@
 use std::{
   env, fs,
-  path::PathBuf,
+  path::{Path, PathBuf},
   time::{Duration, SystemTime},
 };
 
@@ -61,7 +61,7 @@ pub struct LegacyPluginThisOptionsResultStats {
 
 #[derive(Debug, Clone)]
 pub struct LegacyPluginThisOptions {
-  pub file: Option<String>,
+  pub file: Option<PathBuf>,
   pub data: Option<String>,
   pub include_paths: String,
   pub precision: u8,
@@ -81,7 +81,12 @@ impl LegacyPluginThis {
   pub fn new(options: &LegacyOptions) -> Self {
     let mut include_paths =
       vec![env::current_dir().unwrap().to_string_lossy().to_string()];
-    include_paths.extend(options.include_paths.clone());
+    include_paths.extend(
+      options
+        .include_paths
+        .iter()
+        .map(|p| p.to_str().unwrap().to_string()),
+    );
     Self {
       options: LegacyPluginThisOptions {
         file: options.file.clone(),
@@ -95,7 +100,11 @@ impl LegacyPluginThis {
         result: LegacyPluginThisOptionsResult {
           stats: LegacyPluginThisOptionsResultStats {
             start: SystemTime::now(),
-            entry: options.file.clone().unwrap_or_else(|| "data".to_owned()),
+            entry: options
+              .file
+              .as_ref()
+              .map(|file| file.to_str().unwrap().to_string())
+              .unwrap_or_else(|| "data".to_owned()),
           },
         },
       },
@@ -149,16 +158,14 @@ impl LegacyOptionsBuilder {
     self.options
   }
 
-  pub fn include_paths(
-    mut self,
-    arg: impl IntoIterator<Item = String>,
-  ) -> Self {
-    self.options.include_paths = arg.into_iter().collect();
+  pub fn include_paths(mut self, arg: &[impl AsRef<Path>]) -> Self {
+    self.options.include_paths =
+      arg.into_iter().map(|p| p.as_ref().to_owned()).collect();
     self
   }
 
-  pub fn include_path(mut self, arg: impl Into<String>) -> Self {
-    self.options.include_paths.push(arg.into());
+  pub fn include_path(mut self, arg: impl AsRef<Path>) -> Self {
+    self.options.include_paths.push(arg.as_ref().to_owned());
     self
   }
 
@@ -194,9 +201,9 @@ impl LegacyOptionsBuilder {
 
   pub fn sass_importers(
     mut self,
-    arg: impl IntoIterator<Item = SassLegacyImporter>,
+    arg: impl IntoIterator<Item = impl Into<SassLegacyImporter>>,
   ) -> Self {
-    self.options.importers = Some(arg.into_iter().collect());
+    self.options.importers = Some(arg.into_iter().map(|i| i.into()).collect());
     self
   }
 
@@ -213,12 +220,12 @@ impl LegacyOptionsBuilder {
 
   pub fn importers(
     self,
-    arg: impl IntoIterator<Item = Box<dyn LegacyImporter>>,
+    arg: impl IntoIterator<Item = impl Into<Box<dyn LegacyImporter>>>,
   ) -> Self {
     self.sass_importers(arg)
   }
 
-  pub fn importer(self, arg: impl Into<Box<dyn LegacyImporter>>) -> Self {
+  pub fn importer<I: 'static + LegacyImporter>(self, arg: I) -> Self {
     self.sass_importer(arg)
   }
 
@@ -242,8 +249,8 @@ impl LegacyOptionsBuilder {
     self
   }
 
-  pub fn file(mut self, arg: impl Into<String>) -> Self {
-    self.options.file = Some(arg.into());
+  pub fn file(mut self, arg: impl AsRef<Path>) -> Self {
+    self.options.file = Some(arg.as_ref().to_owned());
     self
   }
 
@@ -260,7 +267,7 @@ impl LegacyOptionsBuilder {
 
 #[derive(Debug)]
 pub struct LegacyOptions {
-  pub include_paths: Vec<String>,
+  pub include_paths: Vec<PathBuf>,
   pub indent_type: IndentType,
   pub indent_width: usize,
   pub linefeed: LineFeed,
@@ -272,7 +279,7 @@ pub struct LegacyOptions {
   pub quiet_deps: bool,
   pub verbose: bool,
   pub logger: Option<SassLogger>,
-  pub file: Option<String>,
+  pub file: Option<PathBuf>,
   pub data: Option<String>,
   pub indented_syntax: Option<bool>,
 }
@@ -366,24 +373,19 @@ pub struct LegacyResultStats {
 }
 
 impl LegacyResult {
-  pub fn new(
-    entry: Option<String>,
-    start: SystemTime,
-    result: CompileResult,
-  ) -> Self {
+  pub fn new(entry: String, start: SystemTime, result: CompileResult) -> Self {
     let end = SystemTime::now();
     Self {
       css: result.css.into_bytes(),
       map: result.source_map.map(|map| map.into_bytes()),
       stats: LegacyResultStats {
-        entry: entry.unwrap_or_else(|| "data".to_string()),
+        entry,
         start,
         end,
         duration: end.duration_since(start).unwrap(),
         included_files: result
           .loaded_urls
           .into_iter()
-          .map(|url| Url::parse(&url).unwrap())
           .filter(|url| format!("{}:", url.scheme()) != END_OF_LOAD_PROTOCOL)
           .map(|url| {
             if url.scheme() == "file" {
