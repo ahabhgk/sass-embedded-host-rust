@@ -87,7 +87,7 @@ impl OptionsBuilder {
 
   pub fn load_paths(mut self, arg: &[impl AsRef<Path>]) -> Self {
     self.options.load_paths =
-      arg.into_iter().map(|p| p.as_ref().to_owned()).collect();
+      arg.iter().map(|p| p.as_ref().to_owned()).collect();
     self
   }
 
@@ -236,7 +236,7 @@ impl StringOptionsBuilder {
 
   pub fn load_paths(mut self, arg: &[impl AsRef<Path>]) -> Self {
     self.options.load_paths =
-      arg.into_iter().map(|p| p.as_ref().to_owned()).collect();
+      arg.iter().map(|p| p.as_ref().to_owned()).collect();
     self
   }
 

@@ -160,7 +160,7 @@ impl LegacyOptionsBuilder {
 
   pub fn include_paths(mut self, arg: &[impl AsRef<Path>]) -> Self {
     self.options.include_paths =
-      arg.into_iter().map(|p| p.as_ref().to_owned()).collect();
+      arg.iter().map(|p| p.as_ref().to_owned()).collect();
     self
   }
 
