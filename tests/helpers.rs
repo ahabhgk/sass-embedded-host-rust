@@ -1,9 +1,10 @@
 use std::{
   env, fs,
-  io::Write,
+  io::{Read, Write},
   path::{Path, PathBuf},
 };
 
+use gag::BufferRedirect;
 use sass_embedded_host_rust::{Sass, Url};
 use tempfile::TempDir;
 
@@ -73,6 +74,23 @@ impl Drop for ChdirGuard {
   fn drop(&mut self) {
     env::set_current_dir(&self.0).unwrap();
   }
+}
+
+#[derive(Debug, Clone)]
+pub struct Captured {
+  pub out: String,
+  pub err: String,
+}
+
+pub fn capture_stdio(f: impl Fn()) -> Captured {
+  let mut stdout = BufferRedirect::stdout().unwrap();
+  let mut stderr = BufferRedirect::stderr().unwrap();
+  f();
+  let mut out = String::new();
+  let mut err = String::new();
+  stdout.read_to_string(&mut out).unwrap();
+  stderr.read_to_string(&mut err).unwrap();
+  Captured { out, err }
 }
 
 pub trait ToUrl {

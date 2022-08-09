@@ -10,7 +10,7 @@ use crate::{
   legacy::url_to_file_path_cross_platform, CompileResult, Options,
   StringOptions, Syntax, Url,
 };
-pub use crate::{OutputStyle, SassLogger};
+pub use crate::{Logger, OutputStyle, SassLogger};
 
 use super::{
   LegacyImporter, SassLegacyImporter, END_OF_LOAD_PROTOCOL,
@@ -244,8 +244,8 @@ impl LegacyOptionsBuilder {
     self
   }
 
-  pub fn logger(mut self, arg: impl Into<SassLogger>) -> Self {
-    self.options.logger = Some(arg.into());
+  pub fn logger<L: 'static + Logger>(mut self, arg: L) -> Self {
+    self.options.logger = Some(Box::new(arg));
     self
   }
 
