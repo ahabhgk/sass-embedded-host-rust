@@ -3,15 +3,9 @@
 #[path = "./helpers.rs"]
 mod helpers;
 
-use std::{
-  env,
-  path::{Path, PathBuf},
-  sync::Arc,
-  time::SystemTime,
-};
+use std::{env, path::Path};
 
 use helpers::{capture_stdio, exe_path, Sandbox};
-use parking_lot::Mutex;
 use sass_embedded_host_rust::{
   legacy::{
     IndentType, LegacyImporter, LegacyImporterResult, LegacyImporterThis,
@@ -162,7 +156,7 @@ mod render_sync {
                 .join("_other.scss")
                 .to_str()
                 .unwrap()
-                .replace("\\", "\\\\")
+                .replace('\\', "\\\\")
             ),
           );
         let _chdir = sandbox.chdir();
@@ -496,6 +490,264 @@ mod options {
         )
         .unwrap();
       assert_eq!(res.css, "a {\n  b: c;\n}".as_bytes());
+    }
+
+    #[test]
+    fn supports_the_compressed_output_style() {
+      let mut sass = Sass::new(exe_path());
+      let res = sass
+        .render(
+          LegacyOptionsBuilder::default()
+            .data("a {b: c}")
+            .output_style(OutputStyle::Compressed)
+            .build(),
+        )
+        .unwrap();
+      assert_eq!(res.css, "a{b:c}".as_bytes());
+    }
+  }
+
+  mod quiet_deps {
+    use super::*;
+
+    mod in_a_relative_load_from_the_entrypoint {
+      use super::*;
+
+      #[test]
+      fn emits_at_warn() {
+        let sandbox = Sandbox::default();
+        sandbox
+          .write(sandbox.path().join("test.scss"), "@use \"other\"")
+          .write(sandbox.path().join("_other.scss"), "@warn heck");
+
+        let captured = capture_stdio(|| {
+          let mut sass = Sass::new(exe_path());
+          let _ = sass
+            .render(
+              LegacyOptionsBuilder::default()
+                .file(sandbox.path().join("test.scss"))
+                .quiet_deps(true)
+                .build(),
+            )
+            .unwrap();
+        });
+        assert!(captured.out.is_empty());
+        assert!(!captured.err.is_empty());
+      }
+
+      #[test]
+      fn emits_at_debug() {
+        let sandbox = Sandbox::default();
+        sandbox
+          .write(sandbox.path().join("test.scss"), "@use \"other\"")
+          .write(sandbox.path().join("_other.scss"), "@debug heck");
+
+        let captured = capture_stdio(|| {
+          let mut sass = Sass::new(exe_path());
+          let _ = sass
+            .render(
+              LegacyOptionsBuilder::default()
+                .file(sandbox.path().join("test.scss"))
+                .quiet_deps(true)
+                .build(),
+            )
+            .unwrap();
+        });
+        assert!(captured.out.is_empty());
+        assert!(captured.err.contains("heck"));
+      }
+
+      #[test]
+      fn emits_parser_warnings() {
+        let sandbox = Sandbox::default();
+        sandbox
+          .write(sandbox.path().join("test.scss"), "@use \"other\"")
+          .write(sandbox.path().join("_other.scss"), "a {b: c && d}");
+
+        let captured = capture_stdio(|| {
+          let mut sass = Sass::new(exe_path());
+          let _ = sass
+            .render(
+              LegacyOptionsBuilder::default()
+                .file(sandbox.path().join("test.scss"))
+                .quiet_deps(true)
+                .build(),
+            )
+            .unwrap();
+        });
+        assert!(captured.out.is_empty());
+        assert!(captured.err.contains("&&"));
+      }
+
+      #[test]
+      fn emits_evaluation_warnings() {
+        let sandbox = Sandbox::default();
+        sandbox
+          .write(sandbox.path().join("test.scss"), "@use \"other\"")
+          .write(sandbox.path().join("_other.scss"), "#{blue} {b: c}");
+
+        let captured = capture_stdio(|| {
+          let mut sass = Sass::new(exe_path());
+          let _ = sass
+            .render(
+              LegacyOptionsBuilder::default()
+                .file(sandbox.path().join("test.scss"))
+                .quiet_deps(true)
+                .build(),
+            )
+            .unwrap();
+        });
+        assert!(captured.out.is_empty());
+        assert!(captured.err.contains("blue"));
+      }
+    }
+
+    mod in_a_load_path_load {
+      use super::*;
+
+      #[test]
+      fn emits_at_warn() {
+        let sandbox = Sandbox::default();
+        sandbox
+          .write(sandbox.path().join("test.scss"), "@use \"other\"")
+          .write(sandbox.path().join("dir/_other.scss"), "@warn heck");
+
+        let captured = capture_stdio(|| {
+          let mut sass = Sass::new(exe_path());
+          let _ = sass
+            .render(
+              LegacyOptionsBuilder::default()
+                .file(sandbox.path().join("test.scss"))
+                .quiet_deps(true)
+                .include_path(sandbox.path().join("dir"))
+                .build(),
+            )
+            .unwrap();
+        });
+        assert!(captured.out.is_empty());
+        assert!(captured.err.contains("heck"));
+      }
+
+      #[test]
+      fn emits_at_debug() {
+        let sandbox = Sandbox::default();
+        sandbox
+          .write(sandbox.path().join("test.scss"), "@use \"other\"")
+          .write(sandbox.path().join("dir/_other.scss"), "@debug heck");
+
+        let captured = capture_stdio(|| {
+          let mut sass = Sass::new(exe_path());
+          let _ = sass
+            .render(
+              LegacyOptionsBuilder::default()
+                .file(sandbox.path().join("test.scss"))
+                .quiet_deps(true)
+                .include_path(sandbox.path().join("dir"))
+                .build(),
+            )
+            .unwrap();
+        });
+        assert!(captured.out.is_empty());
+        assert!(captured.err.contains("heck"));
+      }
+
+      #[test]
+      fn emits_parser_warnings() {
+        let sandbox = Sandbox::default();
+        sandbox
+          .write(sandbox.path().join("test.scss"), "@use \"other\"")
+          .write(sandbox.path().join("dir/_other.scss"), "a {b: c && d}");
+
+        let captured = capture_stdio(|| {
+          let mut sass = Sass::new(exe_path());
+          let _ = sass
+            .render(
+              LegacyOptionsBuilder::default()
+                .file(sandbox.path().join("test.scss"))
+                .quiet_deps(true)
+                .include_path(sandbox.path().join("dir"))
+                .build(),
+            )
+            .unwrap();
+        });
+        assert!(captured.out.is_empty());
+        assert!(captured.err.is_empty());
+      }
+
+      #[test]
+      fn emits_evaluation_warnings() {
+        let sandbox = Sandbox::default();
+        sandbox
+          .write(sandbox.path().join("test.scss"), "@use \"other\"")
+          .write(sandbox.path().join("dir/_other.scss"), "#{blue} {b: c}");
+
+        let captured = capture_stdio(|| {
+          let mut sass = Sass::new(exe_path());
+          let _ = sass
+            .render(
+              LegacyOptionsBuilder::default()
+                .file(sandbox.path().join("test.scss"))
+                .quiet_deps(true)
+                .include_path(sandbox.path().join("dir"))
+                .build(),
+            )
+            .unwrap();
+        });
+        assert!(captured.out.is_empty());
+        assert!(captured.err.is_empty());
+      }
+    }
+  }
+
+  mod verbose {
+    use super::*;
+
+    const DATA: &str = r#"
+      $_: call("inspect", null);
+      $_: call("rgb", 0, 0, 0);
+      $_: call("nth", null, 1);
+      $_: call("join", null, null);
+      $_: call("if", true, 1, 2);
+      $_: call("hsl", 0, 100%, 100%);
+      $_: 1/2;
+      $_: 1/3;
+      $_: 1/4;
+      $_: 1/5;
+      $_: 1/6;
+      $_: 1/7;
+    "#;
+
+    #[test]
+    fn when_it_is_true_prints_all_deprecation_warnings() {
+      let captured = capture_stdio(|| {
+        let mut sass = Sass::new(exe_path());
+        let _ = sass
+          .render(
+            LegacyOptionsBuilder::default()
+              .data(DATA)
+              .verbose(true)
+              .build(),
+          )
+          .unwrap();
+      });
+
+      assert!(captured.out.is_empty());
+      assert!(captured.err.matches("call()").count() == 6);
+      assert!(captured.err.matches("math.div").count() == 6);
+    }
+
+    #[test]
+    fn when_it_is_false_prints_only_five_of_each_deprecation_warning() {
+      let captured = capture_stdio(|| {
+        let mut sass = Sass::new(exe_path());
+        let _ = sass
+          .render(LegacyOptionsBuilder::default().data(DATA).build())
+          .unwrap();
+      });
+
+      assert!(captured.out.is_empty());
+      assert!(captured.err.matches("call()").count() == 5);
+      assert!(captured.err.matches("math.div").count() == 5);
     }
   }
 }

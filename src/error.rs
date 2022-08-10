@@ -6,7 +6,7 @@ use crate::protocol::{
 
 pub type Result<T> = std::result::Result<T, Exception>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Exception {
   message: String,
   sass_message: Option<String>,
