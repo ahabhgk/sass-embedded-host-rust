@@ -3,11 +3,11 @@ mod helpers;
 
 use std::sync::Arc;
 
-use helpers::{capture_stdio, exe_path, Sandbox, ToUrl};
+use helpers::{capture_stdio, exe_path, Sandbox};
 use parking_lot::Mutex;
 use sass_embedded_host_rust::{
-  Logger, LoggerDebugOptions, LoggerWarnOptions, Options, OptionsBuilder,
-  OutputStyle, Sass, Silent, StringOptions, StringOptionsBuilder, Syntax, Url,
+  Logger, LoggerDebugOptions, LoggerWarnOptions, Options, OptionsBuilder, Sass,
+  Silent, StringOptions, StringOptionsBuilder,
 };
 
 #[test]

@@ -6,7 +6,9 @@ use std::{sync::Arc, time::SystemTime};
 pub use api::*;
 pub use importer::*;
 
-use crate::{Embedded, Importer, Options, Result, SassImporter, StringOptions};
+use crate::{
+  Embedded, Exception, Importer, Options, Result, SassImporter, StringOptions,
+};
 
 impl Embedded {
   pub fn render(&mut self, options: LegacyOptions) -> Result<LegacyResult> {
@@ -65,7 +67,9 @@ impl Embedded {
       options.importers = importers;
       self.compile(file, options)
     } else {
-      panic!("Either options.data or options.file must be set.");
+      Err(Exception::new(
+        "Either options.data or options.file must be set.",
+      ))
     }?;
     Ok(LegacyResult::new(entry, start, result))
   }

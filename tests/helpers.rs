@@ -56,11 +56,7 @@ impl Sandbox {
     self
   }
 
-  // Since cargo test will run tests in parallel, and the host uses the
-  // cwd when legacy is on, so we need to run legacy tests in sequentially
-  // by adding `--test-threads=1`
   #[cfg(feature = "legacy")]
-  #[allow(dead_code)]
   pub fn chdir(&self) -> ChdirGuard {
     let cwd = env::current_dir().unwrap();
     env::set_current_dir(self.path()).unwrap();

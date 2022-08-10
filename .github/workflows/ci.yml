@@ -46,12 +46,10 @@ jobs:
   test:
     name: 'Tests | ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}-latest
-
     strategy:
       matrix:
         os: [ubuntu, macos, windows]
       fail-fast: false
-
     steps:
       - uses: actions/checkout@v3
       - uses: arduino/setup-protoc@v1
@@ -70,7 +68,26 @@ jobs:
           toolchain: 'stable'
           profile: minimal
           override: true
-      - name: test default features
-        run: cargo test -- --nocapture
-      - name: test legacy features
-        run: cargo test --features legacy -- --test-threads=1 --nocapture
+      # Since cargo test will run tests in parallel, and the crate uses cwd in
+      # legacy importer and captured stdio for testing logger, so we need to
+      # run tests in sequentially by adding `--test-threads=1`
+      - run: cargo test --all-features -- --test-threads=1 --nocapture
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 'stable'
+          profile: minimal
+          override: true
+      - uses: obi1kenobi/cargo-semver-checks-action@v1
+      - name: publish
+        if: |
+          github.repository == 'ahabhgk/sass-embedded-host-rust' &&
+          startsWith(github.ref, 'refs/tags/')
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -vv
