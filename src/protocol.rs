@@ -1,4 +1,1 @@
-#[path = "./protocol/sass.embedded_protocol.rs"]
-mod sass_embedded_protocol;
-
-pub use sass_embedded_protocol::*;
+include!(concat!(env!("OUT_DIR"), "/sass.embedded_protocol.rs"));
