@@ -1,13 +1,11 @@
 //! A Rust library that will communicate with Embedded Dart Sass using the Embedded Sass Protocol
 //!
-//! ```rust
+//! ```no_run
 //! use sass_embedded_host_rust::{Sass, StringOptions};
 //!
-//! fn main() {
-//!   let mut sass = Sass::new("path/to/sass_embedded");
-//!   let res = sass.compile_string("a {b: c}", StringOptions::default()).unwrap();
-//!   println!("{:?}", res);
-//! }
+//! let mut sass = Sass::new("path/to/sass_embedded");
+//! let res = sass.compile_string("a {b: c}", StringOptions::default()).unwrap();
+//! println!("{:?}", res);
 //! ```
 //!
 //! # features
