@@ -1,6 +1,6 @@
 # sass-embedded-host-rust
 
-🦀 A Rust library that will communicate with [Embedded Dart Sass](https://github.com/sass/dart-sass-embedded) using the [Embedded Sass Protocol](https://github.com/sass/embedded-protocol).
+🦀 A Rust library that will communicate with [Embedded Dart Sass](https://github.com/sass/dart-sass-embedded) using the [Embedded Sass protocol](https://github.com/sass/embedded-protocol).
 
 ## Contributing
 

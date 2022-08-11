@@ -1,4 +1,4 @@
-//! A Rust library that will communicate with Embedded Dart Sass using the Embedded Sass Protocol
+//! A Rust library that will communicate with Embedded Dart Sass using the Embedded Sass protocol
 //!
 //! ```no_run
 //! use sass_embedded_host_rust::{Sass, StringOptions};
