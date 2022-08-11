@@ -71,6 +71,14 @@ impl Embedded {
         "Either options.data or options.file must be set.",
       ))
     }?;
-    Ok(LegacyResult::new(entry, start, result))
+    Ok(LegacyResult::new(
+      if entry == "stdin" {
+        "data".to_string()
+      } else {
+        entry
+      },
+      start,
+      result,
+    ))
   }
 }

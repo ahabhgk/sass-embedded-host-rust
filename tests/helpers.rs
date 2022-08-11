@@ -57,6 +57,7 @@ impl Sandbox {
   }
 
   #[cfg(feature = "legacy")]
+  #[allow(dead_code)]
   pub fn chdir(&self) -> ChdirGuard {
     let cwd = env::current_dir().unwrap();
     env::set_current_dir(self.path()).unwrap();
@@ -78,6 +79,7 @@ pub struct Captured {
   pub err: String,
 }
 
+#[allow(dead_code)]
 pub fn capture_stdio(f: impl Fn()) -> Captured {
   let mut stdout = BufferRedirect::stdout().unwrap();
   let mut stderr = BufferRedirect::stderr().unwrap();

@@ -1,17 +1,14 @@
 #![cfg(feature = "legacy")]
 
-#[path = "./helpers.rs"]
+#[path = "helpers.rs"]
 mod helpers;
 
 use std::{env, path::Path};
 
-use helpers::{capture_stdio, exe_path, Sandbox};
+use helpers::{capture_stdio, exe_path, Sandbox, ToUrl};
 use sass_embedded_host_rust::{
-  legacy::{
-    IndentType, LegacyImporter, LegacyImporterResult, LegacyImporterThis,
-    LegacyOptions, LegacyOptionsBuilder, LineFeed, OutputStyle, PATH_DELIMITER,
-  },
-  Exception, Result, Sass,
+  legacy::{LegacyOptions, LegacyOptionsBuilder, OutputStyle, PATH_DELIMITER},
+  Sass,
 };
 
 const SASS_PATH: &str = "SASS_PATH";
@@ -749,5 +746,203 @@ mod options {
       assert!(captured.err.matches("call()").count() == 5);
       assert!(captured.err.matches("math.div").count() == 5);
     }
+  }
+}
+
+mod the_result_object {
+  use super::*;
+
+  #[test]
+  fn includes_the_filename() {
+    let sandbox = Sandbox::default();
+    sandbox.write(sandbox.path().join("test.scss"), "a {b: c}");
+
+    let mut sass = Sass::new(exe_path());
+    let res = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .file(sandbox.path().join("test.scss"))
+          .build(),
+      )
+      .unwrap();
+    assert_eq!(
+      res.stats.entry,
+      sandbox.path().join("test.scss").to_str().unwrap(),
+    );
+  }
+
+  #[test]
+  fn includes_data_without_a_filename() {
+    let mut sass = Sass::new(exe_path());
+    let res = sass
+      .render(LegacyOptionsBuilder::default().data("a {b: c}").build())
+      .unwrap();
+    assert_eq!(res.stats.entry, "data");
+  }
+
+  #[test]
+  fn includes_timing_information() {
+    let mut sass = Sass::new(exe_path());
+    let res = sass
+      .render(LegacyOptionsBuilder::default().data("a {b: c}").build())
+      .unwrap();
+    assert!(res.stats.start <= res.stats.end);
+    assert_eq!(
+      res.stats.duration,
+      res.stats.end.duration_since(res.stats.start).unwrap(),
+    );
+  }
+
+  mod included_files {
+    use super::*;
+
+    #[test]
+    fn contains_the_root_path_with_a_file_parameter() {
+      let sandbox = Sandbox::default();
+      sandbox.write(sandbox.path().join("test.scss"), "a {b: c}");
+
+      let mut sass = Sass::new(exe_path());
+      let res = sass
+        .render(
+          LegacyOptionsBuilder::default()
+            .file(sandbox.path().join("test.scss"))
+            .build(),
+        )
+        .unwrap();
+      assert!(res.stats.included_files.contains(
+        &sandbox
+          .path()
+          .join("test.scss")
+          .to_str()
+          .unwrap()
+          .to_string()
+      ));
+    }
+
+    #[test]
+    fn does_not_contain_the_root_path_with_a_data_parameter() {
+      let mut sass = Sass::new(exe_path());
+      let res = sass
+        .render(LegacyOptionsBuilder::default().data("a {b: c}").build())
+        .unwrap();
+      assert!(res.stats.included_files.is_empty());
+    }
+
+    #[test]
+    fn contains_imported_paths() {
+      let sandbox = Sandbox::default();
+      sandbox
+        .write(sandbox.path().join("_other.scss"), "a {b: c}")
+        .write(sandbox.path().join("test.scss"), "@import \"other\"");
+
+      let mut sass = Sass::new(exe_path());
+      let res = sass
+        .render(
+          LegacyOptionsBuilder::default()
+            .file(sandbox.path().join("test.scss"))
+            .build(),
+        )
+        .unwrap();
+      assert!(res.stats.included_files.contains(
+        &sandbox
+          .path()
+          .join("_other.scss")
+          .to_str()
+          .unwrap()
+          .to_string()
+      ));
+    }
+
+    #[test]
+    fn only_contains_each_path_once() {
+      let sandbox = Sandbox::default();
+      sandbox
+        .write(sandbox.path().join("_other.scss"), "a {b: c}")
+        .write(sandbox.path().join("test.scss"), "@import \"other\"");
+
+      let mut sass = Sass::new(exe_path());
+      let res = sass
+        .render(
+          LegacyOptionsBuilder::default()
+            .file(sandbox.path().join("test.scss"))
+            .build(),
+        )
+        .unwrap();
+      assert!(
+        res
+          .stats
+          .included_files
+          .iter()
+          .filter(
+            |p| p == &sandbox.path().join("_other.scss").to_str().unwrap()
+          )
+          .count()
+          == 1
+      );
+    }
+  }
+}
+
+mod throws_a_legacy_exception {
+  use super::*;
+
+  #[test]
+  fn for_a_parse_error_in_a_file() {
+    let sandbox = Sandbox::default();
+    sandbox.write(sandbox.path().join("test.scss"), "a {b: }");
+
+    let mut sass = Sass::new(exe_path());
+    let err = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .file(sandbox.path().join("test.scss"))
+          .build(),
+      )
+      .unwrap_err();
+    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+    assert_eq!(
+      err.span().unwrap().url,
+      sandbox.path().join("test.scss").to_url().to_string(),
+    );
+  }
+
+  #[test]
+  fn for_a_parse_error_in_a_string() {
+    let mut sass = Sass::new(exe_path());
+    let err = sass
+      .render(LegacyOptionsBuilder::default().data("a {b: }").build())
+      .unwrap_err();
+    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+    assert_eq!(err.span().unwrap().url, "");
+  }
+
+  #[test]
+  fn for_a_runtime_error_in_a_file() {
+    let sandbox = Sandbox::default();
+    sandbox.write(sandbox.path().join("test.scss"), "a {b: 1 % a}");
+
+    let mut sass = Sass::new(exe_path());
+    let err = sass
+      .render(
+        LegacyOptionsBuilder::default()
+          .file(sandbox.path().join("test.scss"))
+          .build(),
+      )
+      .unwrap_err();
+    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+    assert_eq!(
+      err.span().unwrap().url,
+      sandbox.path().join("test.scss").to_url().to_string(),
+    );
+  }
+
+  #[test]
+  fn for_a_runtime_error_in_a_string() {
+    let mut sass = Sass::new(exe_path());
+    let err = sass
+      .render(LegacyOptionsBuilder::default().data("a {b: 1 % a}").build())
+      .unwrap_err();
+    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+    assert_eq!(err.span().unwrap().url, "");
   }
 }

@@ -1,6 +1,6 @@
 #![cfg(feature = "legacy")]
 
-#[path = "./helpers.rs"]
+#[path = "helpers.rs"]
 mod helpers;
 
 use std::{env, path::PathBuf, sync::Arc, time::SystemTime};
