@@ -126,8 +126,8 @@ impl OptionsBuilder {
     self
   }
 
-  pub fn logger(mut self, arg: impl Into<SassLogger>) -> Self {
-    self.options.logger = Some(arg.into());
+  pub fn logger<L: 'static + Logger>(mut self, arg: L) -> Self {
+    self.options.logger = Some(Box::new(arg));
     self
   }
 
@@ -275,8 +275,8 @@ impl StringOptionsBuilder {
     self
   }
 
-  pub fn logger(mut self, arg: impl Into<SassLogger>) -> Self {
-    self.options.logger = Some(arg.into());
+  pub fn logger<L: 'static + Logger>(mut self, arg: L) -> Self {
+    self.options.logger = Some(Box::new(arg));
     self
   }
 
@@ -313,19 +313,25 @@ impl StringOptionsBuilder {
 pub type SassLogger = Box<dyn Logger>;
 
 pub trait Logger: Debug + Send + Sync {
-  fn warn(&self, message: &str, options: &LoggerWarnOptions);
+  fn warn(&self, _message: &str, options: &LoggerWarnOptions) {
+    eprintln!("{}", options.formatted);
+  }
 
-  fn debug(&self, message: &str, options: &LoggerDebugOptions);
+  fn debug(&self, _message: &str, options: &LoggerDebugOptions) {
+    eprintln!("{}", options.formatted);
+  }
 }
 
 pub struct LoggerWarnOptions {
   pub deprecation: bool,
   pub span: Option<SourceSpan>,
   pub stack: Option<String>,
+  pub(crate) formatted: String,
 }
 
 pub struct LoggerDebugOptions {
   pub span: Option<SourceSpan>,
+  pub(crate) formatted: String,
 }
 
 #[derive(Debug)]

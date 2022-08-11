@@ -1,4 +1,4 @@
-#[path = "./helpers.rs"]
+#[path = "helpers.rs"]
 mod helpers;
 
 use helpers::{exe_path, Sandbox, ToUrl};

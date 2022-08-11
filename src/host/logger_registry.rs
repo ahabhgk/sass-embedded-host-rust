@@ -16,7 +16,13 @@ impl LoggerRegistry {
   pub fn log(&self, event: LogEvent) {
     if let Some(logger) = &self.logger {
       if event.r#type() == LogEventType::Debug {
-        logger.debug(&event.message, &LoggerDebugOptions { span: event.span });
+        logger.debug(
+          &event.message,
+          &LoggerDebugOptions {
+            span: event.span,
+            formatted: event.formatted,
+          },
+        );
       } else {
         let deprecation = event.r#type() == LogEventType::DeprecationWarning;
         logger.warn(
@@ -29,6 +35,7 @@ impl LoggerRegistry {
             } else {
               Some(event.stack_trace)
             },
+            formatted: event.formatted,
           },
         );
       }

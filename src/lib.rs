@@ -21,3 +21,12 @@ pub use embedded::{Embedded, Embedded as Sass};
 pub use error::{Exception, Result};
 pub use protocol::{OutputStyle, SourceSpan, Syntax};
 pub use url::{self, Url};
+
+#[derive(Debug, Default, Clone)]
+pub struct Silent;
+
+impl Logger for Silent {
+  fn debug(&self, _: &str, _: &LoggerDebugOptions) {}
+
+  fn warn(&self, _: &str, _: &LoggerWarnOptions) {}
+}
