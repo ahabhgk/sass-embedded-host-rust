@@ -1,8 +1,15 @@
 [package]
 name = "sass-embedded-host-rust"
-version = "0.1.0"
+version = "0.0.1"
+authors = ["ahabhgk <ahabhgk@gmail.com>"]
 edition = "2021"
 resolver = "2"
+license = "MIT"
+description = "A Rust library that will communicate with Embedded Dart Sass using the Embedded Sass Protocol"
+repository = "https://github.com/ahabhgk/sass-embedded-host-rust"
+documentation = "https://docs.rs/sass-embedded-host-rust"
+readme = "README.md"
+include = ["**/*.rs", "ext/sass/sass-embedded.proto"]
 
 [features]
 default = []
