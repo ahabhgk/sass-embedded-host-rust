@@ -6,16 +6,12 @@ use sass_embedded_host_rust::{Options, Sass};
 
 fn exe_path() -> std::path::PathBuf {
   std::path::PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
-    .join("sass_embedded")
+    .join("ext/sass/sass-embedded")
     .join("dart-sass-embedded")
 }
 
 fn main() {
-  let path = exe_path()
-    .parent()
-    .unwrap()
-    .parent()
-    .unwrap()
+  let path = std::path::PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
     .join("examples/bootstrap5/bootstrap/scss");
   let bootstrap = path.join("bootstrap.scss");
   let bootstrap_grid = path.join("bootstrap-grid.scss");
