@@ -27,7 +27,7 @@ impl Embedded {
   /// Creates a sass-embedded compiler and connects with the dart-sass-embedded.
   ///
   /// ```no_run
-  /// let mut sass = Sass::new("path/to/sass_embedded").unwrap();
+  /// let mut sass = sass_embedded::Sass::new("path/to/sass_embedded").unwrap();
   /// ```
   pub fn new(exe_path: impl AsRef<OsStr>) -> Result<Self> {
     Ok(Self {
@@ -37,8 +37,10 @@ impl Embedded {
 
   /// Compiles the Sass file at path to CSS. If it succeeds it returns a [CompileResult],
   /// and if it fails it throws an [Exception].
-  /// 
+  ///
   /// ```no_run
+  /// use sass_embedded::{Sass, Options};
+  ///
   /// let mut sass = Sass::new("path/to/sass_embedded").unwrap();
   /// let res = sass.compile("../styles/a.scss", Options::default()).unwrap();
   /// ```
@@ -85,8 +87,10 @@ impl Embedded {
 
   /// Compiles a stylesheet whose contents is source to CSS. If it succeeds it returns
   /// a [CompileResult], and if it fails it throws an [Exception].
-  /// 
+  ///
   /// ```no_run
+  /// use sass_embedded::{Sass, StringOptions};
+  ///
   /// let mut sass = Sass::new("path/to/sass_embedded").unwrap();
   /// let res = sass.compile_string("a {b: c}", StringOptions::default()).unwrap();
   /// ```
