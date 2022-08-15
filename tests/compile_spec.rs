@@ -2,7 +2,7 @@
 mod helpers;
 
 use helpers::{exe_path, Sandbox, ToUrl};
-use sass_embedded_host_rust::{
+use sass_embedded::{
   Options, OptionsBuilder, OutputStyle, Sass, StringOptions,
   StringOptionsBuilder, Syntax, Url,
 };
@@ -19,7 +19,7 @@ mod compile_string {
 
       #[test]
       fn compiles_scss_by_default() {
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string("$a: b; c {d: $a}", StringOptions::default())
           .unwrap();
@@ -28,7 +28,7 @@ mod compile_string {
 
       #[test]
       fn compiles_scss_with_explicit_syntax() {
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "$a: b; c {d: $a}",
@@ -40,7 +40,7 @@ mod compile_string {
 
       #[test]
       fn compiles_indented_syntax_with_explicit_syntax() {
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "a\n  b: c",
@@ -54,7 +54,7 @@ mod compile_string {
 
       #[test]
       fn compiles_plain_css_with_explicit_syntax() {
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "a {b: c}",
@@ -66,7 +66,7 @@ mod compile_string {
 
       #[test]
       fn does_not_take_its_syntax_from_the_url_s_extension() {
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "a {b: c}",
@@ -84,7 +84,7 @@ mod compile_string {
 
       #[test]
       fn is_empty_with_no_url() {
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string("a {b: c}", StringOptions::default())
           .unwrap();
@@ -94,7 +94,7 @@ mod compile_string {
       #[test]
       fn contains_the_url_if_one_is_passed() {
         let url = Url::parse("file:///foo.scss").unwrap();
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "a {b: c}",
@@ -110,7 +110,7 @@ mod compile_string {
         let url = sandbox.path().join("input.scss").to_url();
         sandbox.write(sandbox.path().join("_other.scss"), "a {b: c}");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "@use \"other\"",
@@ -131,7 +131,7 @@ mod compile_string {
           .write(sandbox.path().join("_midstream.scss"), "@use \"upstream\"")
           .write(sandbox.path().join("_upstream.scss"), "a {b: c}");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "@use \"midstream\"",
@@ -160,7 +160,7 @@ mod compile_string {
             .write(sandbox.path().join("_right.scss"), "@use \"upstream\"")
             .write(sandbox.path().join("_upstream.scss"), "a {b: c}");
 
-          let mut sass = Sass::new(exe_path());
+          let mut sass = Sass::new(exe_path()).unwrap();
           let res = sass
             .compile_string(
               "@use \"left\"; @use \"right\"",
@@ -187,7 +187,7 @@ mod compile_string {
             .write(sandbox.path().join("_right.scss"), "@use \"upstream\"")
             .write(sandbox.path().join("_upstream.scss"), "a {b: c}");
 
-          let mut sass = Sass::new(exe_path());
+          let mut sass = Sass::new(exe_path()).unwrap();
           let res = sass
             .compile_string(
               "@import \"left\"; @import \"right\"",
@@ -212,7 +212,7 @@ mod compile_string {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("foo/bar/_other.scss"), "a {b: c}");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .compile_string(
           "@use \"other\";",
@@ -232,7 +232,7 @@ mod compile_string {
         let sandbox = Sandbox::default();
         sandbox.write(sandbox.path().join("foo/bar/_other.scss"), "a {b: c}");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "@use \"other\";",
@@ -249,7 +249,7 @@ mod compile_string {
         let sandbox = Sandbox::default();
         sandbox.write(sandbox.path().join("foo/bar/_other.scss"), "a {b: c}");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "@use \"bar/other\";",
@@ -266,7 +266,7 @@ mod compile_string {
         let sandbox = Sandbox::default();
         sandbox.write(sandbox.path().join("bar/_other.scss"), "a {b: c}");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "@use \"other\";",
@@ -290,7 +290,7 @@ mod compile_string {
             "a {b: load path}",
           );
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "@use \"other\";",
@@ -310,7 +310,7 @@ mod compile_string {
           .write(sandbox.path().join("earlier/_other.scss"), "a {b: earlier}")
           .write(sandbox.path().join("later/_other.scss"), "a {b: later}");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "@use \"other\";",
@@ -326,7 +326,7 @@ mod compile_string {
 
     #[test]
     fn recognizes_the_expanded_output_style() {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .compile_string(
           "a {b: c}",
@@ -343,7 +343,7 @@ mod compile_string {
 
       #[test]
       fn does_not_include_one_by_default() {
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string("a {b: c}", StringOptions::default())
           .unwrap();
@@ -352,7 +352,7 @@ mod compile_string {
 
       #[test]
       fn includes_one_if_source_map_is_true() {
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "a {b: c}",
@@ -371,7 +371,7 @@ mod compile_string {
       #[test]
       fn includes_one_with_source_content_if_source_map_include_sources_is_true(
       ) {
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "a {b: c}",
@@ -395,7 +395,7 @@ mod compile_string {
 
       #[test]
       fn emits_at_charset_utf_8_or_bom_for_non_ascii_css_by_default() {
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string("a {b: あ;}", StringOptions::default())
           .unwrap();
@@ -404,7 +404,7 @@ mod compile_string {
 
       #[test]
       fn does_not_emit_at_charset_or_bom_if_charset_is_false() {
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile_string(
             "a {b: あ;}",
@@ -421,7 +421,7 @@ mod compile_string {
 
     #[test]
     fn requires_plain_css_with_explicit_syntax() {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let err = sass
         .compile_string(
           "$a: b; c {d: $a}",
@@ -437,7 +437,7 @@ mod compile_string {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("_other.scss"), "a {b: c}");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let err = sass
         .compile_string("@use \"./other\"", StringOptions::default())
         .unwrap_err();
@@ -450,7 +450,7 @@ mod compile_string {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("_other.scss"), "a {b: c}");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let err = sass
         .compile_string(
           "@use \"./other\"",
@@ -471,7 +471,7 @@ mod compile_string {
         let sandbox = Sandbox::default();
         let url = sandbox.path().join("foo.scss").to_url();
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let err = sass
           .compile_string(
             "a {b:",
@@ -487,7 +487,7 @@ mod compile_string {
         let sandbox = Sandbox::default();
         let url = sandbox.path().join("foo.scss").to_url();
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let err = sass
           .compile_string(
             "@error \"oh no\"",
@@ -512,7 +512,7 @@ mod compile {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("input.scss"), "$a: b; c {d: $a}");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .compile(sandbox.path().join("input.scss"), Options::default())
         .unwrap();
@@ -524,7 +524,7 @@ mod compile {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("input.asdf"), "$a: b; c {d: $a}");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .compile(sandbox.path().join("input.asdf"), Options::default())
         .unwrap();
@@ -536,7 +536,7 @@ mod compile {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("input.sass"), "a\n  b: c");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .compile(sandbox.path().join("input.sass"), Options::default())
         .unwrap();
@@ -548,7 +548,7 @@ mod compile {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("input.css"), "a {b: c}");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .compile(sandbox.path().join("input.css"), Options::default())
         .unwrap();
@@ -563,7 +563,7 @@ mod compile {
         let sandbox = Sandbox::default();
         sandbox.write(sandbox.path().join("input.scss"), "a {b: c}");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile(sandbox.path().join("input.scss"), Options::default())
           .unwrap();
@@ -578,7 +578,7 @@ mod compile {
         let sandbox = Sandbox::default();
         sandbox.write(sandbox.path().join("input.scss"), "a {b: c}");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile(sandbox.path().join("input.scss"), Options::default())
           .unwrap();
@@ -595,7 +595,7 @@ mod compile {
           .write(sandbox.path().join("input.scss"), "@use \"other\"")
           .write(sandbox.path().join("_other.scss"), "a {b: c}");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile(sandbox.path().join("input.scss"), Options::default())
           .unwrap();
@@ -616,7 +616,7 @@ mod compile {
         .write(sandbox.path().join("foo/bar/input.scss"), "@use \"other\"")
         .write(sandbox.path().join("foo/bar/_other.scss"), "a {b: c}");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .compile(
           sandbox.path().join("foo/bar/input.scss"),
@@ -636,7 +636,7 @@ mod compile {
           .write(sandbox.path().join("input.scss"), "@use \"other\"")
           .write(sandbox.path().join("foo/bar/_other.scss"), "a {b: c}");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile(
             sandbox.path().join("input.scss"),
@@ -659,7 +659,7 @@ mod compile {
             "a {b: load path}",
           );
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .compile(
             sandbox.path().join("url/input.scss"),
@@ -681,7 +681,7 @@ mod compile {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("input.css"), "$a: b; c {d: $a}");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let err = sass
         .compile(sandbox.path().join("input.css"), Options::default())
         .unwrap_err();
@@ -700,7 +700,7 @@ mod compile {
         let sandbox = Sandbox::default();
         sandbox.write(sandbox.path().join("input.css"), "a {b:");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let err = sass
           .compile(sandbox.path().join("input.css"), Options::default())
           .unwrap_err();
@@ -716,7 +716,7 @@ mod compile {
         let sandbox = Sandbox::default();
         sandbox.write(sandbox.path().join("input.css"), "@error \"oh no\"");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let err = sass
           .compile(sandbox.path().join("input.css"), Options::default())
           .unwrap_err();

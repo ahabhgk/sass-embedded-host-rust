@@ -17,18 +17,36 @@ use crate::{
   legacy::LEGACY_IMPORTER_PROTOCOL, protocol::inbound_message::compile_request,
 };
 
+/// The sass-embedded compiler for rust host.
 #[derive(Debug)]
 pub struct Embedded {
   channel: Channel,
 }
 
 impl Embedded {
-  pub fn new(exe_path: impl AsRef<OsStr>) -> Self {
-    Self {
-      channel: Channel::new(exe_path),
-    }
+  /// Creates a sass-embedded compiler and connects with the dart-sass-embedded.
+  ///
+  /// ```no_run
+  /// let mut sass = sass_embedded::Sass::new("path/to/sass_embedded").unwrap();
+  /// ```
+  pub fn new(exe_path: impl AsRef<OsStr>) -> Result<Self> {
+    Ok(Self {
+      channel: Channel::new(exe_path)?,
+    })
   }
 
+  /// Compiles the Sass file at path to CSS. If it succeeds it returns a [CompileResult],
+  /// and if it fails it throws an [Exception].
+  ///
+  /// ```no_run
+  /// use sass_embedded::{Sass, Options};
+  ///
+  /// let mut sass = Sass::new("path/to/sass_embedded").unwrap();
+  /// let res = sass.compile("../styles/a.scss", Options::default()).unwrap();
+  /// ```
+  ///
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/modules#compile)
   pub fn compile(
     &mut self,
     path: impl AsRef<Path>,
@@ -62,11 +80,23 @@ impl Embedded {
     };
 
     let host = Host::new(importer_registry, logger_registry);
-    let conn = self.channel.connect(host);
+    let conn = self.channel.connect(host)?;
     let response = conn.compile_request(request)?;
     CompileResult::try_from(response)
   }
 
+  /// Compiles a stylesheet whose contents is source to CSS. If it succeeds it returns
+  /// a [CompileResult], and if it fails it throws an [Exception].
+  ///
+  /// ```no_run
+  /// use sass_embedded::{Sass, StringOptions};
+  ///
+  /// let mut sass = Sass::new("path/to/sass_embedded").unwrap();
+  /// let res = sass.compile_string("a {b: c}", StringOptions::default()).unwrap();
+  /// ```
+  ///
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/modules#compileString)
   pub fn compile_string(
     &mut self,
     source: impl Into<String>,
@@ -139,16 +169,17 @@ impl Embedded {
     };
 
     let host = Host::new(importer_registry, logger_registry);
-    let conn = self.channel.connect(host);
+    let conn = self.channel.connect(host)?;
     let response = conn.compile_request(request)?;
     CompileResult::try_from(response)
   }
 
+  /// Gets the version of the sass-embedded compiler.
   pub fn info(&mut self) -> Result<String> {
     let logger_registry = LoggerRegistry::default();
     let importer_registry = ImporterRegistry::default();
     let host = Host::new(importer_registry, logger_registry);
-    let conn = self.channel.connect(host);
+    let conn = self.channel.connect(host)?;
     let response = conn.version_request()?;
     Ok(format!(
       "sass-embedded\t#{}",

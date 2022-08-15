@@ -6,7 +6,7 @@ mod helpers;
 use std::{env, path::Path};
 
 use helpers::{capture_stdio, exe_path, Sandbox, ToUrl};
-use sass_embedded_host_rust::{
+use sass_embedded::{
   legacy::{LegacyOptions, LegacyOptionsBuilder, OutputStyle, PATH_DELIMITER},
   Sass,
 };
@@ -39,7 +39,7 @@ mod render_sync {
 
   #[test]
   fn one_of_data_and_file_must_be_set() {
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     assert!(sass.render(LegacyOptions::default()).is_err());
   }
 
@@ -51,7 +51,7 @@ mod render_sync {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("test.scss"), "a {b: c}");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
@@ -68,7 +68,7 @@ mod render_sync {
       sandbox.write(sandbox.path().join("test.scss"), "a {b: c}");
       let _chdir = sandbox.chdir();
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
@@ -85,7 +85,7 @@ mod render_sync {
       sandbox.write(sandbox.path().join("test.sass"), "a\n  b: c");
       let _chdir = sandbox.chdir();
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
@@ -106,7 +106,7 @@ mod render_sync {
           .write(sandbox.path().join("_other.scss"), "a {b: c}")
           .write(sandbox.path().join("importer.scss"), "@import \"other\";");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .render(
             LegacyOptionsBuilder::default()
@@ -128,7 +128,7 @@ mod render_sync {
           );
         let _chdir = sandbox.chdir();
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .render(
             LegacyOptionsBuilder::default()
@@ -158,7 +158,7 @@ mod render_sync {
           );
         let _chdir = sandbox.chdir();
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .render(
             LegacyOptionsBuilder::default()
@@ -181,7 +181,7 @@ mod render_sync {
           .write(sandbox.path().join("importer.scss"), "@import \"other\";");
         let _chdir = sandbox.chdir();
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .render(
             LegacyOptionsBuilder::default()
@@ -207,7 +207,7 @@ mod render_sync {
           );
         let _chdir = sandbox.chdir();
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .render(
             LegacyOptionsBuilder::default()
@@ -228,7 +228,7 @@ mod render_sync {
 
     #[test]
     fn renders_a_string() {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(LegacyOptionsBuilder::default().data("a {b: c}").build())
         .unwrap();
@@ -245,7 +245,7 @@ mod render_sync {
         let sandbox = Sandbox::default();
         sandbox.write(sandbox.path().join("test.scss"), "a {b: c}");
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .render(
             LegacyOptionsBuilder::default()
@@ -268,7 +268,7 @@ mod render_sync {
           sandbox.path().join("dir2"),
         ]);
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .render(
             LegacyOptionsBuilder::default()
@@ -287,7 +287,7 @@ mod render_sync {
           .write(sandbox.path().join("dir2/test.scss"), "x {y: z}");
         let _with_sass_path = with_sass_path(&[sandbox.path().join("dir1")]);
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .render(
             LegacyOptionsBuilder::default()
@@ -311,7 +311,7 @@ mod render_sync {
           .write(sandbox.path().join("sub/_upstream.scss"), "a {b: c}");
         let _with_sass_path = with_sass_path(&[sandbox.path().join("dir1")]);
 
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let res = sass
           .render(
             LegacyOptionsBuilder::default()
@@ -336,7 +336,7 @@ mod render_sync {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("test.scss"), "a {b: c}");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
@@ -353,7 +353,7 @@ mod render_sync {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("test.scss"), "a {b: c}");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
@@ -370,7 +370,7 @@ mod render_sync {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("_other.scss"), "a {b: c}");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
@@ -391,7 +391,7 @@ mod render_sync {
       .write(sandbox.path().join("sub/_midstream.scss"), "@use 'sass:meta';\n\n@mixin mixin {\n@include meta.load-css('upstream');\n}")
       .write(sandbox.path().join("downstream.scss"), "@use 'sub/midstream';\n\n@include midstream.mixin;");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .render(
         LegacyOptionsBuilder::default()
@@ -409,7 +409,7 @@ mod message {
   #[test]
   fn resolves_meta_load_css_relative_to_the_containing_file() {
     let captured = capture_stdio(|| {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let _ = sass
         .render(LegacyOptionsBuilder::default().data("@warn heck").build())
         .unwrap();
@@ -421,7 +421,7 @@ mod message {
   #[test]
   fn emits_debug_messages_on_stderr_by_default() {
     let captured = capture_stdio(|| {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let _ = sass
         .render(LegacyOptionsBuilder::default().data("@debug heck").build())
         .unwrap();
@@ -439,7 +439,7 @@ mod options {
 
     #[test]
     fn renders_the_indented_syntax() {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
@@ -456,7 +456,7 @@ mod options {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("test.scss"), "a\n  b: c");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
@@ -477,7 +477,7 @@ mod options {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("test.scss"), "a\n  b: c");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
@@ -491,7 +491,7 @@ mod options {
 
     #[test]
     fn supports_the_compressed_output_style() {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
@@ -518,7 +518,7 @@ mod options {
           .write(sandbox.path().join("_other.scss"), "@warn heck");
 
         let captured = capture_stdio(|| {
-          let mut sass = Sass::new(exe_path());
+          let mut sass = Sass::new(exe_path()).unwrap();
           let _ = sass
             .render(
               LegacyOptionsBuilder::default()
@@ -540,7 +540,7 @@ mod options {
           .write(sandbox.path().join("_other.scss"), "@debug heck");
 
         let captured = capture_stdio(|| {
-          let mut sass = Sass::new(exe_path());
+          let mut sass = Sass::new(exe_path()).unwrap();
           let _ = sass
             .render(
               LegacyOptionsBuilder::default()
@@ -562,7 +562,7 @@ mod options {
           .write(sandbox.path().join("_other.scss"), "a {b: c && d}");
 
         let captured = capture_stdio(|| {
-          let mut sass = Sass::new(exe_path());
+          let mut sass = Sass::new(exe_path()).unwrap();
           let _ = sass
             .render(
               LegacyOptionsBuilder::default()
@@ -584,7 +584,7 @@ mod options {
           .write(sandbox.path().join("_other.scss"), "#{blue} {b: c}");
 
         let captured = capture_stdio(|| {
-          let mut sass = Sass::new(exe_path());
+          let mut sass = Sass::new(exe_path()).unwrap();
           let _ = sass
             .render(
               LegacyOptionsBuilder::default()
@@ -610,7 +610,7 @@ mod options {
           .write(sandbox.path().join("dir/_other.scss"), "@warn heck");
 
         let captured = capture_stdio(|| {
-          let mut sass = Sass::new(exe_path());
+          let mut sass = Sass::new(exe_path()).unwrap();
           let _ = sass
             .render(
               LegacyOptionsBuilder::default()
@@ -633,7 +633,7 @@ mod options {
           .write(sandbox.path().join("dir/_other.scss"), "@debug heck");
 
         let captured = capture_stdio(|| {
-          let mut sass = Sass::new(exe_path());
+          let mut sass = Sass::new(exe_path()).unwrap();
           let _ = sass
             .render(
               LegacyOptionsBuilder::default()
@@ -656,7 +656,7 @@ mod options {
           .write(sandbox.path().join("dir/_other.scss"), "a {b: c && d}");
 
         let captured = capture_stdio(|| {
-          let mut sass = Sass::new(exe_path());
+          let mut sass = Sass::new(exe_path()).unwrap();
           let _ = sass
             .render(
               LegacyOptionsBuilder::default()
@@ -679,7 +679,7 @@ mod options {
           .write(sandbox.path().join("dir/_other.scss"), "#{blue} {b: c}");
 
         let captured = capture_stdio(|| {
-          let mut sass = Sass::new(exe_path());
+          let mut sass = Sass::new(exe_path()).unwrap();
           let _ = sass
             .render(
               LegacyOptionsBuilder::default()
@@ -717,7 +717,7 @@ mod options {
     #[test]
     fn when_it_is_true_prints_all_deprecation_warnings() {
       let captured = capture_stdio(|| {
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let _ = sass
           .render(
             LegacyOptionsBuilder::default()
@@ -736,7 +736,7 @@ mod options {
     #[test]
     fn when_it_is_false_prints_only_five_of_each_deprecation_warning() {
       let captured = capture_stdio(|| {
-        let mut sass = Sass::new(exe_path());
+        let mut sass = Sass::new(exe_path()).unwrap();
         let _ = sass
           .render(LegacyOptionsBuilder::default().data(DATA).build())
           .unwrap();
@@ -757,7 +757,7 @@ mod the_result_object {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("test.scss"), "a {b: c}");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .render(
         LegacyOptionsBuilder::default()
@@ -773,7 +773,7 @@ mod the_result_object {
 
   #[test]
   fn includes_data_without_a_filename() {
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .render(LegacyOptionsBuilder::default().data("a {b: c}").build())
       .unwrap();
@@ -782,7 +782,7 @@ mod the_result_object {
 
   #[test]
   fn includes_timing_information() {
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .render(LegacyOptionsBuilder::default().data("a {b: c}").build())
       .unwrap();
@@ -801,7 +801,7 @@ mod the_result_object {
       let sandbox = Sandbox::default();
       sandbox.write(sandbox.path().join("test.scss"), "a {b: c}");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
@@ -821,7 +821,7 @@ mod the_result_object {
 
     #[test]
     fn does_not_contain_the_root_path_with_a_data_parameter() {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(LegacyOptionsBuilder::default().data("a {b: c}").build())
         .unwrap();
@@ -835,7 +835,7 @@ mod the_result_object {
         .write(sandbox.path().join("_other.scss"), "a {b: c}")
         .write(sandbox.path().join("test.scss"), "@import \"other\"");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
@@ -860,7 +860,7 @@ mod the_result_object {
         .write(sandbox.path().join("_other.scss"), "a {b: c}")
         .write(sandbox.path().join("test.scss"), "@import \"other\"");
 
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let res = sass
         .render(
           LegacyOptionsBuilder::default()
@@ -891,7 +891,7 @@ mod throws_a_legacy_exception {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("test.scss"), "a {b: }");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let err = sass
       .render(
         LegacyOptionsBuilder::default()
@@ -908,7 +908,7 @@ mod throws_a_legacy_exception {
 
   #[test]
   fn for_a_parse_error_in_a_string() {
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let err = sass
       .render(LegacyOptionsBuilder::default().data("a {b: }").build())
       .unwrap_err();
@@ -921,7 +921,7 @@ mod throws_a_legacy_exception {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("test.scss"), "a {b: 1 % a}");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let err = sass
       .render(
         LegacyOptionsBuilder::default()
@@ -938,7 +938,7 @@ mod throws_a_legacy_exception {
 
   #[test]
   fn for_a_runtime_error_in_a_string() {
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let err = sass
       .render(LegacyOptionsBuilder::default().data("a {b: 1 % a}").build())
       .unwrap_err();

@@ -1,9 +1,9 @@
 //! A Rust library that will communicate with Embedded Dart Sass using the Embedded Sass protocol
 //!
 //! ```no_run
-//! use sass_embedded_host_rust::{Sass, StringOptions};
+//! use sass_embedded::{Sass, StringOptions};
 //!
-//! let mut sass = Sass::new("path/to/sass_embedded");
+//! let mut sass = Sass::new("path/to/sass_embedded").unwrap();
 //! let res = sass.compile_string("a {b: c}", StringOptions::default()).unwrap();
 //! println!("{:?}", res);
 //! ```
@@ -14,7 +14,7 @@
 //!
 
 #![forbid(unsafe_code)]
-// #![deny(missing_docs)]
+#![deny(missing_docs)]
 
 mod api;
 mod channel;
@@ -40,6 +40,10 @@ pub use error::{Exception, Result};
 pub use protocol::{OutputStyle, SourceSpan, Syntax};
 pub use url::{self, Url};
 
+/// A Logger that silently ignores all warnings and debug messages.
+///
+/// More information:
+///  - [Sass documentation][https://sass-lang.com/documentation/js-api/modules/Logger#silent]
 #[derive(Debug, Default, Clone)]
 pub struct Silent;
 

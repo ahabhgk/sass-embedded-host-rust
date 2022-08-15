@@ -5,12 +5,12 @@ use std::{
 };
 
 use gag::BufferRedirect;
-use sass_embedded_host_rust::{Sass, Url};
+use sass_embedded::{Sass, Url};
 use tempfile::TempDir;
 
 #[test]
 fn version_smoke() {
-  let mut sass = Sass::new(exe_path());
+  let mut sass = Sass::new(exe_path()).unwrap();
   let info = sass.info().unwrap();
   // !!! the crate's version should be the same as the embedded's version !!!
   assert_eq!(info, "sass-embedded\t#1.54.4");

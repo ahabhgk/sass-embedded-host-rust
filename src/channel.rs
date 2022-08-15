@@ -8,6 +8,7 @@ use crate::{
   connection::{ConnectedGuard, Connection},
   dispatcher::Dispatcher,
   host::Host,
+  Result,
 };
 
 #[derive(Debug)]
@@ -17,22 +18,22 @@ pub struct Channel {
 }
 
 impl Channel {
-  pub fn new(path: impl AsRef<OsStr>) -> Self {
+  pub fn new(path: impl AsRef<OsStr>) -> Result<Self> {
     let path = path.as_ref().to_os_string();
-    let compiler = Compiler::new(&path);
+    let compiler = Compiler::new(&path)?;
     let dispatcher = Dispatcher::new(compiler);
-    Self { path, dispatcher }
+    Ok(Self { path, dispatcher })
   }
 
-  pub fn connect(&mut self, host: Host) -> ConnectedGuard {
+  pub fn connect(&mut self, host: Host) -> Result<ConnectedGuard> {
     let conn = Connection::new(Arc::clone(&self.dispatcher));
     match self.dispatcher.subscribe(conn, host) {
       Err((conn, host)) => {
-        let compiler = Compiler::new(&self.path);
+        let compiler = Compiler::new(&self.path)?;
         self.dispatcher = Dispatcher::new(compiler);
-        self.dispatcher.subscribe(conn, host).unwrap()
+        Ok(self.dispatcher.subscribe(conn, host).unwrap())
       }
-      Ok(conn) => conn,
+      Ok(conn) => Ok(conn),
     }
   }
 }
