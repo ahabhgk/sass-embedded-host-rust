@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use helpers::{capture_stdio, exe_path, Sandbox};
 use parking_lot::Mutex;
-use sass_embedded_host_rust::{
+use sass_embedded::{
   Logger, LoggerDebugOptions, LoggerWarnOptions, Options, OptionsBuilder, Sass,
   Silent, StringOptions, StringOptionsBuilder,
 };
@@ -13,7 +13,7 @@ use sass_embedded_host_rust::{
 #[test]
 fn emits_debug_to_stderr_by_default() {
   let captured = capture_stdio(|| {
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let _ = sass
       .compile_string("@debug heck", StringOptions::default())
       .unwrap();
@@ -43,7 +43,7 @@ mod with_at_warn {
     }
 
     let count = Arc::new(Mutex::new(0));
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let _ = sass
       .compile_string(
         "@mixin foo {@warn heck}\n@include foo;",
@@ -72,7 +72,7 @@ mod with_at_warn {
     }
 
     let count = Arc::new(Mutex::new(0));
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let _ = sass
       .compile_string(
         "@warn #abc",
@@ -101,7 +101,7 @@ mod with_at_warn {
     }
 
     let count = Arc::new(Mutex::new(0));
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let _ = sass
       .compile_string(
         "@warn null",
@@ -118,7 +118,7 @@ mod with_at_warn {
   #[test]
   fn emits_to_stderr_by_default() {
     let captured = capture_stdio(|| {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let _ = sass
         .compile_string("@warn heck", StringOptions::default())
         .unwrap();
@@ -137,7 +137,7 @@ mod with_at_warn {
     }
 
     let captured = capture_stdio(|| {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let _ = sass
         .compile_string(
           "@warn heck",
@@ -159,7 +159,7 @@ mod with_at_warn {
     }
 
     let captured = capture_stdio(|| {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let _ = sass
         .compile_string(
           "@warn heck",
@@ -174,7 +174,7 @@ mod with_at_warn {
   #[test]
   fn does_not_emit_warnings_with_logger_silent() {
     let captured = capture_stdio(|| {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let _ = sass
         .compile_string(
           "@warn heck",
@@ -210,7 +210,7 @@ mod with_at_debug {
     }
 
     let count = Arc::new(Mutex::new(0));
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let _ = sass
       .compile_string(
         "@debug heck",
@@ -239,7 +239,7 @@ mod with_at_debug {
     }
 
     let count = Arc::new(Mutex::new(0));
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let _ = sass
       .compile_string(
         "@debug #abc",
@@ -268,7 +268,7 @@ mod with_at_debug {
     }
 
     let count = Arc::new(Mutex::new(0));
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let _ = sass
       .compile_string(
         "@debug null",
@@ -285,7 +285,7 @@ mod with_at_debug {
   #[test]
   fn emits_to_stderr_by_default() {
     let captured = capture_stdio(|| {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let _ = sass
         .compile_string("@debug heck", StringOptions::default())
         .unwrap();
@@ -304,7 +304,7 @@ mod with_at_debug {
     }
 
     let captured = capture_stdio(|| {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let _ = sass
         .compile_string(
           "@debug heck",
@@ -326,7 +326,7 @@ mod with_at_debug {
     }
 
     let captured = capture_stdio(|| {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let _ = sass
         .compile_string(
           "@debug heck",
@@ -341,7 +341,7 @@ mod with_at_debug {
   #[test]
   fn does_not_emit_debugs_with_logger_silent() {
     let captured = capture_stdio(|| {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let _ = sass
         .compile_string(
           "@debug heck",
@@ -366,7 +366,7 @@ mod compile {
     );
 
     let captured = capture_stdio(|| {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let _ = sass
         .compile(sandbox.path().join("style.scss"), Options::default())
         .unwrap();
@@ -397,7 +397,7 @@ mod compile {
     );
 
     let captured = capture_stdio(|| {
-      let mut sass = Sass::new(exe_path());
+      let mut sass = Sass::new(exe_path()).unwrap();
       let _ = sass
         .compile(
           sandbox.path().join("style.scss"),

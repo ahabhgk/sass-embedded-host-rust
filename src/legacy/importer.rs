@@ -18,10 +18,13 @@ use crate::{
 
 use super::{LegacyImporterResult, LegacyImporterThis, LegacyPluginThis};
 
-pub const END_OF_LOAD_PROTOCOL: &str = "sass-embedded-legacy-load-done:";
-pub const LEGACY_IMPORTER_PROTOCOL: &str = "legacy-importer:";
+pub(crate) const END_OF_LOAD_PROTOCOL: &str = "sass-embedded-legacy-load-done:";
+pub(crate) const LEGACY_IMPORTER_PROTOCOL: &str = "legacy-importer:";
 
+/// More information:
+///  - [Sass documentation](https://sass-lang.com/documentation/js-api/modules#LegacyImporter)
 pub trait LegacyImporter: Debug + Sync + Send {
+  /// implements of [LegacyImporter].
   fn call(
     &self,
     this: &LegacyImporterThis,
@@ -30,6 +33,7 @@ pub trait LegacyImporter: Debug + Sync + Send {
   ) -> Result<Option<LegacyImporterResult>>;
 }
 
+/// A type alias for [Box<dyn LegacyImporter>].
 pub type SassLegacyImporter = Box<dyn LegacyImporter>;
 
 impl<I: 'static + LegacyImporter> From<I> for SassLegacyImporter {
@@ -39,7 +43,7 @@ impl<I: 'static + LegacyImporter> From<I> for SassLegacyImporter {
 }
 
 #[derive(Debug)]
-pub struct LegacyImporterWrapper {
+pub(crate) struct LegacyImporterWrapper {
   prev_stack: Mutex<Vec<PreviousUrl>>,
   last_contents: Mutex<Option<String>>,
   expecting_relative_load: Mutex<bool>,

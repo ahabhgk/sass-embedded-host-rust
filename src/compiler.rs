@@ -10,7 +10,7 @@ use prost::Message;
 
 use crate::{
   protocol::{InboundMessage, OutboundMessage},
-  varint,
+  varint, Exception, Result,
 };
 
 #[derive(Debug)]
@@ -20,17 +20,17 @@ pub struct Compiler {
 }
 
 impl Compiler {
-  pub fn new(path: impl AsRef<OsStr>) -> Self {
+  pub fn new(path: impl AsRef<OsStr>) -> Result<Self> {
     let cmd = Command::new(path)
       .stdin(Stdio::piped())
       .stdout(Stdio::piped())
       .stderr(Stdio::piped())
       .spawn()
-      .unwrap();
+      .map_err(|e| Exception::new(e.to_string()).set_source(e))?;
     let stdin = Mutex::new(cmd.stdin.unwrap());
     let stdout = Mutex::new(cmd.stdout.unwrap());
 
-    Self { stdin, stdout }
+    Ok(Self { stdin, stdout })
   }
 
   pub fn write(&self, message: InboundMessage) {

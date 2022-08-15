@@ -3,7 +3,7 @@ mod helpers;
 
 use helpers::{exe_path, Sandbox, ToUrl};
 use parking_lot::Mutex;
-use sass_embedded_host_rust::{
+use sass_embedded::{
   Exception, FileImporter, Importer, ImporterOptions, ImporterResult,
   OptionsBuilder, Result, Sass, StringOptions, StringOptionsBuilder, Syntax,
   Url,
@@ -34,7 +34,7 @@ fn uses_an_importer_to_resolve_an_at_import() {
     }
   }
 
-  let mut sass = Sass::new(exe_path());
+  let mut sass = Sass::new(exe_path()).unwrap();
   let res = sass
     .compile_string(
       "@import \"orange\";",
@@ -68,7 +68,7 @@ fn passes_the_canonicalized_url_to_the_importer() {
     }
   }
 
-  let mut sass = Sass::new(exe_path());
+  let mut sass = Sass::new(exe_path()).unwrap();
   let res = sass
     .compile_string(
       "@import \"orange\";",
@@ -102,7 +102,7 @@ fn only_invokes_the_importer_once_for_a_given_canonicalization() {
     }
   }
 
-  let mut sass = Sass::new(exe_path());
+  let mut sass = Sass::new(exe_path()).unwrap();
   let res = sass
     .compile_string(
       r#"
@@ -145,7 +145,7 @@ mod the_imported_url {
       }
     }
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"/orange\";",
@@ -179,7 +179,7 @@ mod the_imported_url {
       }
     }
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"C:/orange\";",
@@ -214,7 +214,7 @@ fn uses_an_importer_is_source_map_url() {
     }
   }
 
-  let mut sass = Sass::new(exe_path());
+  let mut sass = Sass::new(exe_path()).unwrap();
   let res = sass
     .compile_string(
       "@import \"orange\";",
@@ -249,7 +249,7 @@ fn wraps_an_error_in_canonicalize() {
     }
   }
 
-  let mut sass = Sass::new(exe_path());
+  let mut sass = Sass::new(exe_path()).unwrap();
   let err = sass
     .compile_string(
       "@import \"orange\";",
@@ -279,7 +279,7 @@ fn wraps_an_error_in_load() {
     }
   }
 
-  let mut sass = Sass::new(exe_path());
+  let mut sass = Sass::new(exe_path()).unwrap();
   let err = sass
     .compile_string(
       "@import \"orange\";",
@@ -312,7 +312,7 @@ fn avoids_importer_when_canonicalize_returns_nil() {
   let sandbox = Sandbox::default();
   sandbox.write(sandbox.path().join("dir/_other.scss"), "a {from: dir}");
 
-  let mut sass = Sass::new(exe_path());
+  let mut sass = Sass::new(exe_path()).unwrap();
   let res = sass
     .compile_string(
       "@import \"other\";",
@@ -347,7 +347,7 @@ fn fails_to_import_when_load_returns_nil() {
   let sandbox = Sandbox::default();
   sandbox.write(sandbox.path().join("dir/_other.scss"), "a {from: dir}");
 
-  let mut sass = Sass::new(exe_path());
+  let mut sass = Sass::new(exe_path()).unwrap();
   let err = sass
     .compile_string(
       "@import \"other\";",
@@ -384,7 +384,7 @@ fn prefers_a_relative_file_load_to_an_importer() {
     .write(sandbox.path().join("input.scss"), "@import \"other\"")
     .write(sandbox.path().join("_other.scss"), "a {from: relative}");
 
-  let mut sass = Sass::new(exe_path());
+  let mut sass = Sass::new(exe_path()).unwrap();
   let res = sass
     .compile(
       sandbox.path().join("input.scss"),
@@ -433,7 +433,7 @@ fn prefers_a_relative_importer_load_to_an_importer() {
     }
   }
 
-  let mut sass = Sass::new(exe_path());
+  let mut sass = Sass::new(exe_path()).unwrap();
   let res = sass
     .compile_string(
       "@import \"other\";",
@@ -471,7 +471,7 @@ fn prefers_an_importer_to_a_load_path() {
     .write(sandbox.path().join("input.scss"), "@import \"other\"")
     .write(sandbox.path().join("_other.scss"), "a {from: relative}");
 
-  let mut sass = Sass::new(exe_path());
+  let mut sass = Sass::new(exe_path()).unwrap();
   let res = sass
     .compile(
       sandbox.path().join("input.scss"),
@@ -507,7 +507,7 @@ mod with_syntax {
       }
     }
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"other\";",
@@ -540,7 +540,7 @@ mod with_syntax {
       }
     }
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"other\";",
@@ -573,7 +573,7 @@ mod with_syntax {
       }
     }
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"other\";",
@@ -606,7 +606,7 @@ mod with_syntax {
       }
     }
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let err = sass
       .compile_string(
         "@import \"other\";",
@@ -644,7 +644,7 @@ mod from_import_is {
       }
     }
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let _ = sass
       .compile_string(
         "@import \"foo\"",
@@ -677,7 +677,7 @@ mod from_import_is {
       }
     }
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let _ = sass
       .compile_string(
         "@use \"foo\"",
@@ -710,7 +710,7 @@ mod from_import_is {
       }
     }
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let _ = sass
       .compile_string(
         "@forward \"foo\"",
@@ -743,7 +743,7 @@ mod from_import_is {
       }
     }
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let _ = sass
       .compile_string(
         "@use \"sass:meta\"; @include meta.load-css(\"\")",
@@ -776,7 +776,7 @@ mod file_importer {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("_other.scss"), "a {b: c}");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"other\";",
@@ -808,7 +808,7 @@ mod file_importer {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("other/_index.scss"), "a {b: c}");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"other\";",
@@ -838,7 +838,7 @@ mod file_importer {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("_other.scss"), "a {from: dir}");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"other\";",
@@ -871,7 +871,7 @@ mod file_importer {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("_other.scss"), "a {b: c}");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"other\";",
@@ -905,7 +905,7 @@ mod file_importer {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("dir/_other.scss"), "a {b: c}");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"u:other\";",
@@ -936,7 +936,7 @@ mod file_importer {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("_other.scss"), "a {b: c}");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         &format!("@import \"{}\";", sandbox.path().join("other").to_url()),
@@ -979,7 +979,7 @@ mod file_importer {
       )
       .write(sandbox.path().join("_upstream.scss"), "a {b: c}");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"midstream\";",
@@ -1010,7 +1010,7 @@ mod file_importer {
       }
     }
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let err = sass
       .compile_string("@import \"other\";", StringOptions::default())
       .unwrap_err();
@@ -1032,7 +1032,7 @@ mod file_importer {
       }
     }
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let err = sass
       .compile_string(
         "@import \"other\";",
@@ -1064,7 +1064,7 @@ mod file_importer {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("_other.scss"), "$a: value; b {c: $a}");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"other\";",
@@ -1097,7 +1097,7 @@ mod file_importer {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("_other.sass"), "$a: value\nb\n  c: $a");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"other\";",
@@ -1129,7 +1129,7 @@ mod file_importer {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("_other.css"), "a {b: c}");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let res = sass
       .compile_string(
         "@import \"other\";",
@@ -1162,7 +1162,7 @@ mod file_importer {
     sandbox.write(sandbox.path().join("_other.css"), "$a: value; b {c: $a}");
     let url = sandbox.path().join("_other.css").to_url();
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let err = sass
       .compile_string(
         "@import \"other\";",
@@ -1196,7 +1196,7 @@ mod file_importer {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("_other.css"), "a {b: c}");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let _ = sass
       .compile_string(
         "@import \"other\";",
@@ -1228,7 +1228,7 @@ mod file_importer {
     let sandbox = Sandbox::default();
     sandbox.write(sandbox.path().join("_other.css"), "a {b: c}");
 
-    let mut sass = Sass::new(exe_path());
+    let mut sass = Sass::new(exe_path()).unwrap();
     let _ = sass
       .compile_string(
         "@use \"other\";",

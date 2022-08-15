@@ -14,32 +14,44 @@ use crate::{
   Exception, Result, Url,
 };
 
-/// https://sass-lang.com/documentation/js-api/interfaces/Options
+/// Options that can be passed to [Sass::compile].
+///
+/// More information:
+///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options)
 #[derive(Debug)]
 pub struct Options {
-  /// https://sass-lang.com/documentation/js-api/interfaces/Options#alertAscii
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#alertAscii)
   pub alert_ascii: bool,
-  /// https://sass-lang.com/documentation/js-api/interfaces/Options#alertColor
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#alertColor)
   pub alert_color: Option<bool>,
-  // /// https://sass-lang.com/documentation/js-api/interfaces/Options#functions
-  // pub functions
-  /// https://sass-lang.com/documentation/js-api/interfaces/Options#importers
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#importers)
   pub importers: Vec<SassImporter>,
-  /// https://sass-lang.com/documentation/js-api/interfaces/Options#loadPaths
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#loadPaths)
   pub load_paths: Vec<PathBuf>,
-  /// https://sass-lang.com/documentation/js-api/interfaces/Options#logger
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#logger)
   pub logger: Option<SassLogger>,
-  /// https://sass-lang.com/documentation/js-api/interfaces/Options#quietDeps
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#quietDeps)
   pub quiet_deps: bool,
-  /// https://sass-lang.com/documentation/js-api/interfaces/Options#sourceMap
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#sourceMap)
   pub source_map: bool,
-  /// https://sass-lang.com/documentation/js-api/interfaces/Options#sourceMapIncludeSources
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#sourceMapIncludeSources)
   pub source_map_include_sources: bool,
-  /// https://sass-lang.com/documentation/js-api/interfaces/Options#style
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#style)
   pub style: OutputStyle,
-  /// https://sass-lang.com/documentation/js-api/interfaces/Options#verbose
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#verbose)
   pub verbose: bool,
-  /// https://sass-lang.com/documentation/js-api/interfaces/Options#charset
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#charset)
   pub charset: bool,
 }
 
@@ -61,81 +73,97 @@ impl Default for Options {
   }
 }
 
+/// A builder for [Options].
 #[derive(Debug, Default)]
 pub struct OptionsBuilder {
   options: Options,
 }
 
 impl OptionsBuilder {
+  /// Creates a new [OptionsBuilder].
   pub fn new() -> Self {
     Self::default()
   }
 
+  /// Build the [Options].
   pub fn build(self) -> Options {
     self.options
   }
 
+  /// Sets the [Options]'s [alert_ascii] field.
   pub fn alert_ascii(mut self, arg: impl Into<bool>) -> Self {
     self.options.alert_ascii = arg.into();
     self
   }
 
+  /// Sets the [Options]'s [alert_color] field.
   pub fn alert_color(mut self, arg: impl Into<bool>) -> Self {
     self.options.alert_color = Some(arg.into());
     self
   }
 
+  /// Sets the [Options]'s [load_paths] field.
   pub fn load_paths(mut self, arg: &[impl AsRef<Path>]) -> Self {
     self.options.load_paths =
       arg.iter().map(|p| p.as_ref().to_owned()).collect();
     self
   }
 
+  /// Adds a load_path to the [Options]'s [load_paths] field.
   pub fn load_path(mut self, arg: impl AsRef<Path>) -> Self {
     self.options.load_paths.push(arg.as_ref().to_owned());
     self
   }
 
+  /// Sets the [Options]'s [quiet_deps] field.
   pub fn quiet_deps(mut self, arg: impl Into<bool>) -> Self {
     self.options.quiet_deps = arg.into();
     self
   }
 
+  /// Sets the [Options]'s [source_map] field.
   pub fn source_map(mut self, arg: impl Into<bool>) -> Self {
     self.options.source_map = arg.into();
     self
   }
 
+  /// Sets the [Options]'s [source_map_include_sources] field.
   pub fn source_map_include_sources(mut self, arg: impl Into<bool>) -> Self {
     self.options.source_map_include_sources = arg.into();
     self
   }
 
+  /// Sets the [Options]'s [style] field.
   pub fn style(mut self, arg: impl Into<OutputStyle>) -> Self {
     self.options.style = arg.into();
     self
   }
 
+  /// Sets the [Options]'s [verbose] field.
   pub fn verbose(mut self, arg: impl Into<bool>) -> Self {
     self.options.verbose = arg.into();
     self
   }
 
+  /// Sets the [Options]'s [charset] field.
   pub fn charset(mut self, arg: impl Into<bool>) -> Self {
     self.options.charset = arg.into();
     self
   }
 
+  /// Sets the [Options]'s [logger] field.
   pub fn logger<L: 'static + Logger>(mut self, arg: L) -> Self {
     self.options.logger = Some(Box::new(arg));
     self
   }
 
+  /// Adds a [SassImporter] to the [Options]'s [importers] field.
   pub fn sass_importer(mut self, arg: impl Into<SassImporter>) -> Self {
     self.options.importers.push(arg.into());
     self
   }
 
+  /// Sets the [Options]'s [importers] field.
   pub fn sass_importers(
     mut self,
     arg: impl IntoIterator<Item = impl Into<SassImporter>>,
@@ -144,6 +172,7 @@ impl OptionsBuilder {
     self
   }
 
+  /// Adds a [Importer] to the [Options]'s [importers] field.
   pub fn importer<I: 'static + Importer>(mut self, arg: I) -> Self {
     self
       .options
@@ -152,6 +181,7 @@ impl OptionsBuilder {
     self
   }
 
+  /// Adds a [FileImporter] to the [Options]'s [importers] field.
   pub fn file_importer<I: 'static + FileImporter>(mut self, arg: I) -> Self {
     self.options.importers.push(SassImporter::FileImporter(
       Box::new(arg) as Box<dyn FileImporter>
@@ -160,33 +190,43 @@ impl OptionsBuilder {
   }
 }
 
+/// Options that can be passed to [Sass::compile_string].
+///
+/// More information:
+///  - [Sass documentation](https://sass-lang.com/documentation/js-api/modules#StringOptions)
 #[derive(Debug, Default)]
 pub struct StringOptions {
+  /// Field for [Options]
   pub common: Options,
-  /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#importer
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#importer)
   pub input_importer: Option<SassImporter>,
-  /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#syntax
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#syntax)
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#syntax)
   pub syntax: Syntax,
-  /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#url
+  /// More information:
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#url)
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#url)
   pub url: Option<Url>,
 }
 
+/// A builder for [StringOptions].
 #[derive(Debug, Default)]
 pub struct StringOptionsBuilder {
   options: Options,
-  /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#importer
   input_importer: Option<SassImporter>,
-  /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#syntax
   syntax: Syntax,
-  /// https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#url
   url: Option<Url>,
 }
 
 impl StringOptionsBuilder {
+  /// Creates a new [StringOptionsBuilder].
   pub fn new() -> Self {
     Self::default()
   }
 
+  /// Build the [StringOptions].
   pub fn build(self) -> StringOptions {
     StringOptions {
       common: self.options,
@@ -196,16 +236,19 @@ impl StringOptionsBuilder {
     }
   }
 
+  /// Sets the [StringOptions]'s [input_importer] field with a [SassImporter].
   pub fn input_sass_importer(mut self, arg: impl Into<SassImporter>) -> Self {
     self.input_importer = Some(arg.into());
     self
   }
 
+  /// Sets the [StringOptions]'s [input_importer] field with a [Importer].
   pub fn input_importer<I: 'static + Importer>(mut self, arg: I) -> Self {
     self.input_importer = Some(SassImporter::Importer(Box::new(arg)));
     self
   }
 
+  /// Sets the [StringOptions]'s [input_importer] field with a [FileImporter].
   pub fn input_file_importer<I: 'static + FileImporter>(
     mut self,
     arg: I,
@@ -214,77 +257,92 @@ impl StringOptionsBuilder {
     self
   }
 
+  /// Sets the [StringOptions]'s [syntax] field.
   pub fn syntax(mut self, arg: impl Into<Syntax>) -> Self {
     self.syntax = arg.into();
     self
   }
 
+  /// Sets the [StringOptions]'s [url] field.
   pub fn url(mut self, arg: impl Into<Url>) -> Self {
     self.url = Some(arg.into());
     self
   }
 
+  /// Sets the [StringOptions]'s [alert_ascii] field.
   pub fn alert_ascii(mut self, arg: impl Into<bool>) -> Self {
     self.options.alert_ascii = arg.into();
     self
   }
 
+  /// Sets the [StringOptions]'s [alert_color] field.
   pub fn alert_color(mut self, arg: impl Into<bool>) -> Self {
     self.options.alert_color = Some(arg.into());
     self
   }
 
+  /// Sets the [StringOptions]'s [load_paths] field.
   pub fn load_paths(mut self, arg: &[impl AsRef<Path>]) -> Self {
     self.options.load_paths =
       arg.iter().map(|p| p.as_ref().to_owned()).collect();
     self
   }
 
+  /// Adds a [Path] to the [StringOptions]'s [load_paths] field.
   pub fn load_path(mut self, arg: impl AsRef<Path>) -> Self {
     self.options.load_paths.push(arg.as_ref().to_owned());
     self
   }
 
+  /// Sets the [StringOptions]'s [quiet_deps] field.
   pub fn quiet_deps(mut self, arg: impl Into<bool>) -> Self {
     self.options.quiet_deps = arg.into();
     self
   }
 
+  /// Sets the [StringOptions]'s [source_map] field.
   pub fn source_map(mut self, arg: impl Into<bool>) -> Self {
     self.options.source_map = arg.into();
     self
   }
 
+  /// Sets the [StringOptions]'s [source_map_include_sources] field.
   pub fn source_map_include_sources(mut self, arg: impl Into<bool>) -> Self {
     self.options.source_map_include_sources = arg.into();
     self
   }
 
+  /// Sets the [StringOptions]'s [style] field.
   pub fn style(mut self, arg: impl Into<OutputStyle>) -> Self {
     self.options.style = arg.into();
     self
   }
 
+  /// Sets the [StringOptions]'s [verbose] field.
   pub fn verbose(mut self, arg: impl Into<bool>) -> Self {
     self.options.verbose = arg.into();
     self
   }
 
+  /// Sets the [StringOptions]'s [charset] field.
   pub fn charset(mut self, arg: impl Into<bool>) -> Self {
     self.options.charset = arg.into();
     self
   }
 
+  /// Sets the [StringOptions]'s [logger] field.
   pub fn logger<L: 'static + Logger>(mut self, arg: L) -> Self {
     self.options.logger = Some(Box::new(arg));
     self
   }
 
+  /// Adds a [SassImporter] to the [StringOptions]'s [importers] field.
   pub fn sass_importer(mut self, arg: impl Into<SassImporter>) -> Self {
     self.options.importers.push(arg.into());
     self
   }
 
+  /// Sets the [StringOptions]'s [importers] field with [SassImporter]s.
   pub fn sass_importers(
     mut self,
     arg: impl IntoIterator<Item = impl Into<SassImporter>>,
@@ -293,6 +351,7 @@ impl StringOptionsBuilder {
     self
   }
 
+  /// Adds a [Importer] to the [StringOptions]'s [importers] field.
   pub fn importer<I: 'static + Importer>(mut self, arg: I) -> Self {
     self
       .options
@@ -301,6 +360,7 @@ impl StringOptionsBuilder {
     self
   }
 
+  /// Adds a [FileImporter] to the [StringOptions]'s [importers] field.
   pub fn file_importer<I: 'static + FileImporter>(mut self, arg: I) -> Self {
     self
       .options
@@ -310,56 +370,89 @@ impl StringOptionsBuilder {
   }
 }
 
+/// A type alias for [Box<dyn Logger>].
 pub type SassLogger = Box<dyn Logger>;
 
+/// More information
+///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger)
 pub trait Logger: Debug + Send + Sync {
+  /// More information
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger#warn)
   fn warn(&self, _message: &str, options: &LoggerWarnOptions) {
     eprintln!("{}", options.formatted);
   }
 
+  /// More information
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger#debug)
   fn debug(&self, _message: &str, options: &LoggerDebugOptions) {
     eprintln!("{}", options.formatted);
   }
 }
 
+/// Options for [Logger::warn].
+///
+/// More information
+///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger#warn)
 pub struct LoggerWarnOptions {
+  /// Whether this is a deprecation warning.
   pub deprecation: bool,
+  /// The location in the Sass source code that generated this warning.
   pub span: Option<SourceSpan>,
+  /// The Sass stack trace at the point the warning was issued.
   pub stack: Option<String>,
   pub(crate) formatted: String,
 }
 
+/// Options for [Logger::debug].
+///
+/// More information
+///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger#debug)
 pub struct LoggerDebugOptions {
+  /// The location in the Sass source code that generated this debug message.
   pub span: Option<SourceSpan>,
   pub(crate) formatted: String,
 }
 
+/// Enum wrapper for [Box<dyn Importer>] and [Box<dyn FileImporter>].
 #[derive(Debug)]
 pub enum SassImporter {
+  /// A [Box<dyn Importer>].
   Importer(Box<dyn Importer>),
+  /// A [Box<dyn FileImporter>].
   FileImporter(Box<dyn FileImporter>),
 }
 
-/// https://sass-lang.com/documentation/js-api/interfaces/Importer
+/// More information
+///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer)
 pub trait Importer: Debug + Send + Sync {
-  /// https://sass-lang.com/documentation/js-api/interfaces/Importer#canonicalize
+  /// More information
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer#canonicalize)
   fn canonicalize(
     &self,
     url: &str,
     options: &ImporterOptions,
   ) -> Result<Option<Url>>;
 
-  /// https://sass-lang.com/documentation/js-api/interfaces/Importer#load
+  /// More information
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer#load)
   fn load(&self, canonical_url: &Url) -> Result<Option<ImporterResult>>;
 }
 
+/// Options for [Importer::canonicalize] or [Importer::load].
+///
+/// More information
+///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer#canonicalize)
 pub struct ImporterOptions {
+  /// Whether this is being invoked because of a Sass @import rule, as opposed to a @use
+  /// or @forward rule.
   pub from_import: bool,
 }
 
-/// https://sass-lang.com/documentation/js-api/interfaces/FileImporter
+/// More information
+///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/FileImporter)
 pub trait FileImporter: Debug + Send + Sync {
-  /// https://sass-lang.com/documentation/js-api/interfaces/FileImporter#findFileUrl
+  /// More information
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/FileImporter#findFileUrl)
   fn find_file_url(
     &self,
     url: &str,
@@ -367,24 +460,32 @@ pub trait FileImporter: Debug + Send + Sync {
   ) -> Result<Option<Url>>;
 }
 
-/// https://sass-lang.com/documentation/js-api/interfaces/ImporterResult
+/// More information
+///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/ImporterResult)
 pub struct ImporterResult {
-  /// https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#contents
+  /// More information
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#contents)
   pub contents: String,
-  /// https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#sourceMapUrl
+  /// More information
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#sourceMapUrl)
   pub source_map_url: Option<Url>,
-  /// https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#syntax
+  /// More information
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#syntax)
   pub syntax: Syntax,
 }
 
-/// https://sass-lang.com/documentation/js-api/interfaces/CompileResult
+/// More information
+///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/CompileResult)
 #[derive(Debug, Clone)]
 pub struct CompileResult {
-  /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#css
+  /// More information
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/CompileResult#css)
   pub css: String,
-  /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#loadedUrls
+  /// More information
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/CompileResult#loadedUrls)
   pub loaded_urls: Vec<Url>,
-  /// https://sass-lang.com/documentation/js-api/interfaces/CompileResult#sourceMap
+  /// More information
+  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/CompileResult#sourceMap)
   pub source_map: Option<String>,
 }
 

@@ -1,8 +1,8 @@
 use std::time;
 
 #[cfg(feature = "legacy")]
-use sass_embedded_host_rust::legacy::LegacyOptionsBuilder;
-use sass_embedded_host_rust::{Options, Sass};
+use sass_embedded::legacy::LegacyOptionsBuilder;
+use sass_embedded::{Options, Sass};
 
 fn exe_path() -> std::path::PathBuf {
   std::path::PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")))
@@ -17,7 +17,7 @@ fn main() {
   let bootstrap_grid = path.join("bootstrap-grid.scss");
   let bootstrap_reboot = path.join("bootstrap-reboot.scss");
   let bootstrap_utilities = path.join("bootstrap-utilities.scss");
-  let mut sass = Sass::new(exe_path());
+  let mut sass = Sass::new(exe_path()).unwrap();
   let _ = sass.compile(&bootstrap, Options::default()).unwrap();
   let _ = sass.compile(&bootstrap_grid, Options::default()).unwrap();
   let _ = sass.compile(&bootstrap_reboot, Options::default()).unwrap();
