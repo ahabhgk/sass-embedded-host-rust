@@ -1,12 +1,14 @@
 {
-  "name": "sass-embedded-host-rust-setup-scripts",
+  "name": "sass-embedded-host-rust-scripts",
   "version": "0.0.0",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "setup": "node ./scripts/setup.mjs"
   },
   "devDependencies": {
     "extract-zip": "^2.0.1",
     "node-fetch": "^3.2.10",
+    "sass": "^1.54.4",
+    "sass-embedded": "^1.54.4",
     "tar": "^6.1.11"
   }
 }

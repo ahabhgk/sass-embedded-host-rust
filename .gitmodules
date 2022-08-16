@@ -1,3 +1,3 @@
-[submodule "examples/bootstrap5/bootstrap"]
-	path = examples/bootstrap5/bootstrap
+[submodule "benches/bootstrap/bootstrap"]
+	path = benches/bootstrap/bootstrap
 	url = https://github.com/twbs/bootstrap.git
