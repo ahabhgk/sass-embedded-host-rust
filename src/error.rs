@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt;
 
 use crate::protocol::{
   outbound_message::compile_response::CompileFailure, ProtocolError, SourceSpan,
@@ -17,7 +17,7 @@ pub struct Exception {
   sass_message: Option<String>,
   sass_stack: Option<String>,
   span: Option<SourceSpan>,
-  source: Option<Box<dyn std::error::Error + 'static>>,
+  source: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
 }
 
 impl Exception {
@@ -48,10 +48,10 @@ impl Exception {
 
 impl std::error::Error for Exception {}
 
-impl Display for Exception {
+impl fmt::Display for Exception {
   /// More information:
   ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/classes/Exception#toString)
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.message)
   }
 }
@@ -89,7 +89,7 @@ impl Exception {
   /// Sets the source error of the exception.
   pub fn set_source(
     mut self,
-    source: impl std::error::Error + 'static,
+    source: impl std::error::Error + Send + Sync + 'static,
   ) -> Self {
     self.source = Some(Box::new(source));
     self
