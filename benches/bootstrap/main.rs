@@ -70,9 +70,9 @@ fn dart_sass() {
 fn benchmark(c: &mut Criterion) {
   let mut group = c.benchmark_group("bootstrap");
   group.sample_size(10);
-  group.bench_function("Host Rust", |b| b.iter(|| host_rust()));
-  group.bench_function("Host Node", |b| b.iter(|| host_node()));
-  group.bench_function("Dart Sass", |b| b.iter(|| dart_sass()));
+  group.bench_function("Host Rust", |b| b.iter(host_rust));
+  group.bench_function("Host Node", |b| b.iter(host_node));
+  group.bench_function("Dart Sass", |b| b.iter(dart_sass));
 }
 
 criterion_group!(benches, benchmark);
