@@ -10,10 +10,10 @@ use crate::{
   legacy::url_to_file_path_cross_platform, CompileResult, Options,
   StringOptions, Syntax, Url,
 };
-pub use crate::{Logger, OutputStyle, SassLogger};
+pub use crate::{BoxedLogger, Logger, OutputStyle};
 
 use super::{
-  LegacyImporter, SassLegacyImporter, END_OF_LOAD_PROTOCOL,
+  BoxedLegacyImporter, LegacyImporter, END_OF_LOAD_PROTOCOL,
   LEGACY_IMPORTER_PROTOCOL,
 };
 
@@ -268,14 +268,14 @@ impl LegacyOptionsBuilder {
   /// Sets the [LegacyOptions]'s [sass_importers] field with [SassLegacyImporter]s.
   pub fn sass_importers(
     mut self,
-    arg: impl IntoIterator<Item = impl Into<SassLegacyImporter>>,
+    arg: impl IntoIterator<Item = impl Into<BoxedLegacyImporter>>,
   ) -> Self {
     self.options.importers = Some(arg.into_iter().map(|i| i.into()).collect());
     self
   }
 
   /// Adds a [SassLegacyImporter] to the [LegacyOptions]'s [sass_importers] field.
-  pub fn sass_importer(mut self, arg: impl Into<SassLegacyImporter>) -> Self {
+  pub fn sass_importer(mut self, arg: impl Into<BoxedLegacyImporter>) -> Self {
     self.options.importers =
       Some(if let Some(mut importers) = self.options.importers {
         importers.push(arg.into());
@@ -369,7 +369,7 @@ pub struct LegacyOptions {
   pub source_map_contents: bool,
   /// More information:
   ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#importer)
-  pub importers: Option<Vec<SassLegacyImporter>>,
+  pub importers: Option<Vec<BoxedLegacyImporter>>,
   /// More information:
   ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#charset)
   pub charset: bool,
@@ -381,7 +381,7 @@ pub struct LegacyOptions {
   pub verbose: bool,
   /// More information:
   ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#logger)
-  pub logger: Option<SassLogger>,
+  pub logger: Option<BoxedLogger>,
   /// More information:
   ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyFileOptions#file)
   pub file: Option<PathBuf>,

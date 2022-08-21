@@ -34,7 +34,7 @@ pub struct Options {
   pub load_paths: Vec<PathBuf>,
   /// More information:
   ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#logger)
-  pub logger: Option<SassLogger>,
+  pub logger: Option<BoxedLogger>,
   /// More information:
   ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#quietDeps)
   pub quiet_deps: bool,
@@ -103,9 +103,9 @@ impl OptionsBuilder {
   }
 
   /// Sets the [Options]'s [load_paths] field.
-  pub fn load_paths(mut self, arg: &[impl AsRef<Path>]) -> Self {
+  pub fn load_paths<P: AsRef<Path>>(mut self, arg: impl AsRef<[P]>) -> Self {
     self.options.load_paths =
-      arg.iter().map(|p| p.as_ref().to_owned()).collect();
+      arg.as_ref().iter().map(|p| p.as_ref().to_owned()).collect();
     self
   }
 
@@ -282,9 +282,9 @@ impl StringOptionsBuilder {
   }
 
   /// Sets the [StringOptions]'s [load_paths] field.
-  pub fn load_paths(mut self, arg: &[impl AsRef<Path>]) -> Self {
+  pub fn load_paths<P: AsRef<Path>>(mut self, arg: impl AsRef<[P]>) -> Self {
     self.options.load_paths =
-      arg.iter().map(|p| p.as_ref().to_owned()).collect();
+      arg.as_ref().iter().map(|p| p.as_ref().to_owned()).collect();
     self
   }
 
@@ -371,7 +371,7 @@ impl StringOptionsBuilder {
 }
 
 /// A type alias for [Box<dyn Logger>].
-pub type SassLogger = Box<dyn Logger>;
+pub type BoxedLogger = Box<dyn Logger>;
 
 /// More information
 ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger)
@@ -413,14 +413,20 @@ pub struct LoggerDebugOptions {
   pub(crate) formatted: String,
 }
 
-/// Enum wrapper for [Box<dyn Importer>] and [Box<dyn FileImporter>].
+/// Enum wrapper for [BoxedImporter] and [BoxedFileImporter].
 #[derive(Debug)]
 pub enum SassImporter {
-  /// A [Box<dyn Importer>].
-  Importer(Box<dyn Importer>),
-  /// A [Box<dyn FileImporter>].
-  FileImporter(Box<dyn FileImporter>),
+  /// A [BoxedImporter].
+  Importer(BoxedImporter),
+  /// A [BoxedFileImporter].
+  FileImporter(BoxedFileImporter),
 }
+
+/// A type alias for [Box<dyn Importer>].
+pub type BoxedImporter = Box<dyn Importer>;
+
+/// A type alias for [Box<dyn FileImporter>].
+pub type BoxedFileImporter = Box<dyn FileImporter>;
 
 /// More information
 ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer)

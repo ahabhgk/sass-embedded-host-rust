@@ -1,5 +1,5 @@
 {
-  "name": "sass-embedded-host-rust-scripts",
+  "name": "sass-embedded-host-rust",
   "version": "0.0.0",
   "scripts": {
     "setup": "node ./scripts/setup.mjs"

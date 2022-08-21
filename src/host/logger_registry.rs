@@ -1,15 +1,15 @@
 use crate::{
   protocol::{outbound_message::LogEvent, LogEventType},
-  LoggerDebugOptions, LoggerWarnOptions, SassLogger,
+  BoxedLogger, LoggerDebugOptions, LoggerWarnOptions,
 };
 
 #[derive(Debug, Default)]
 pub struct LoggerRegistry {
-  logger: Option<SassLogger>,
+  logger: Option<BoxedLogger>,
 }
 
 impl LoggerRegistry {
-  pub fn register(&mut self, logger: SassLogger) {
+  pub fn register(&mut self, logger: BoxedLogger) {
     self.logger = Some(logger);
   }
 
