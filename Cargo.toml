@@ -1,11 +1,12 @@
 [package]
 name = "sass-embedded"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["ahabhgk <ahabhgk@gmail.com>"]
 edition = "2021"
 resolver = "2"
 license = "MIT"
 description = "A Rust library that will communicate with Embedded Dart Sass using the Embedded Sass protocol"
+keywords = ["sass", "dart-sass", "sass-embedded", "scss"]
 repository = "https://github.com/ahabhgk/sass-embedded-host-rust"
 documentation = "https://docs.rs/sass-embedded-host-rust"
 readme = "README.md"
@@ -40,3 +41,6 @@ prost-build = "0.11"
 [[bench]]
 name = "bootstrap"
 harness = false
+
+[package.metadata.docs.rs]
+all-features = true

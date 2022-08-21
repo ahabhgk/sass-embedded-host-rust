@@ -31,9 +31,10 @@ mod varint;
 pub mod legacy;
 
 pub use api::{
-  CompileResult, FileImporter, Importer, ImporterOptions, ImporterResult,
-  Logger, LoggerDebugOptions, LoggerWarnOptions, Options, OptionsBuilder,
-  SassImporter, SassLogger, StringOptions, StringOptionsBuilder,
+  BoxedFileImporter, BoxedImporter, BoxedLogger, CompileResult, FileImporter,
+  Importer, ImporterOptions, ImporterResult, Logger, LoggerDebugOptions,
+  LoggerWarnOptions, Options, OptionsBuilder, SassImporter, StringOptions,
+  StringOptionsBuilder,
 };
 pub use embedded::{Embedded, Embedded as Sass};
 pub use error::{Exception, Result};

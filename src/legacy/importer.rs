@@ -34,9 +34,9 @@ pub trait LegacyImporter: Debug + Sync + Send {
 }
 
 /// A type alias for [Box<dyn LegacyImporter>].
-pub type SassLegacyImporter = Box<dyn LegacyImporter>;
+pub type BoxedLegacyImporter = Box<dyn LegacyImporter>;
 
-impl<I: 'static + LegacyImporter> From<I> for SassLegacyImporter {
+impl<I: 'static + LegacyImporter> From<I> for BoxedLegacyImporter {
   fn from(importer: I) -> Self {
     Box::new(importer)
   }
@@ -47,7 +47,7 @@ pub(crate) struct LegacyImporterWrapper {
   prev_stack: Mutex<Vec<PreviousUrl>>,
   last_contents: Mutex<Option<String>>,
   expecting_relative_load: Mutex<bool>,
-  callbacks: Vec<SassLegacyImporter>,
+  callbacks: Vec<BoxedLegacyImporter>,
   this: LegacyPluginThis,
   load_paths: Vec<PathBuf>,
 }
@@ -55,7 +55,7 @@ pub(crate) struct LegacyImporterWrapper {
 impl LegacyImporterWrapper {
   pub fn new(
     this: LegacyPluginThis,
-    callbacks: Vec<SassLegacyImporter>,
+    callbacks: Vec<BoxedLegacyImporter>,
     load_paths: Vec<PathBuf>,
     initial_prev: &str,
   ) -> Arc<Self> {

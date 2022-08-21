@@ -18,9 +18,8 @@ jobs:
           node-version: 16
       - name: setup sass-embedded
         run: |
-          cd scripts
           npm install
-          node setup.mjs
+          npm run setup
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: 'stable'
