@@ -19,7 +19,7 @@ impl LoggerRegistry {
         logger.debug(
           &event.message,
           &LoggerDebugOptions {
-            span: event.span,
+            span: event.span.map(|span| span.into()),
             formatted: event.formatted,
           },
         );
@@ -28,7 +28,7 @@ impl LoggerRegistry {
         logger.warn(
           &event.message,
           &LoggerWarnOptions {
-            span: event.span,
+            span: event.span.map(|span| span.into()),
             deprecation,
             stack: if event.stack_trace.is_empty() {
               None

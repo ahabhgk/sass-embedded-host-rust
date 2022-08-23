@@ -428,8 +428,8 @@ mod compile_string {
           StringOptionsBuilder::default().syntax(Syntax::Css).build(),
         )
         .unwrap_err();
-      assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
-      assert_eq!(err.span().unwrap().url, String::new());
+      assert_eq!(err.span().unwrap().start.line, 0);
+      assert!(err.span().unwrap().url.is_none());
     }
 
     #[test]
@@ -441,8 +441,8 @@ mod compile_string {
       let err = sass
         .compile_string("@use \"./other\"", StringOptions::default())
         .unwrap_err();
-      assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
-      assert_eq!(err.span().unwrap().url, String::new());
+      assert_eq!(err.span().unwrap().start.line, 0);
+      assert!(err.span().unwrap().url.is_none());
     }
 
     #[test]
@@ -459,8 +459,11 @@ mod compile_string {
             .build(),
         )
         .unwrap_err();
-      assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
-      assert_eq!(err.span().unwrap().url, "unknown:style.scss".to_owned());
+      assert_eq!(err.span().unwrap().start.line, 0);
+      assert_eq!(
+        err.span().unwrap().url.as_ref().unwrap(),
+        &Url::parse("unknown:style.scss").unwrap(),
+      );
     }
 
     mod includes_source_span_information {
@@ -478,8 +481,8 @@ mod compile_string {
             StringOptionsBuilder::default().url(url.clone()).build(),
           )
           .unwrap_err();
-        assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
-        assert_eq!(err.span().unwrap().url, url.to_string());
+        assert_eq!(err.span().unwrap().start.line, 0);
+        assert_eq!(err.span().unwrap().url.as_ref().unwrap(), &url);
       }
 
       #[test]
@@ -494,8 +497,8 @@ mod compile_string {
             StringOptionsBuilder::default().url(url.clone()).build(),
           )
           .unwrap_err();
-        assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
-        assert_eq!(err.span().unwrap().url, url.to_string());
+        assert_eq!(err.span().unwrap().start.line, 0);
+        assert_eq!(err.span().unwrap().url.as_ref().unwrap(), &url);
       }
     }
   }
@@ -685,10 +688,10 @@ mod compile {
       let err = sass
         .compile(sandbox.path().join("input.css"), Options::default())
         .unwrap_err();
-      assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+      assert_eq!(err.span().unwrap().start.line, 0);
       assert_eq!(
-        err.span().unwrap().url,
-        sandbox.path().join("input.css").to_url().to_string()
+        err.span().unwrap().url.as_ref().unwrap(),
+        &sandbox.path().join("input.css").to_url(),
       );
     }
 
@@ -704,10 +707,10 @@ mod compile {
         let err = sass
           .compile(sandbox.path().join("input.css"), Options::default())
           .unwrap_err();
-        assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+        assert_eq!(err.span().unwrap().start.line, 0);
         assert_eq!(
-          err.span().unwrap().url,
-          sandbox.path().join("input.css").to_url().to_string()
+          err.span().unwrap().url.as_ref().unwrap(),
+          &sandbox.path().join("input.css").to_url(),
         );
       }
 
@@ -720,10 +723,10 @@ mod compile {
         let err = sass
           .compile(sandbox.path().join("input.css"), Options::default())
           .unwrap_err();
-        assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+        assert_eq!(err.span().unwrap().start.line, 0);
         assert_eq!(
-          err.span().unwrap().url,
-          sandbox.path().join("input.css").to_url().to_string()
+          err.span().unwrap().url.as_ref().unwrap(),
+          &sandbox.path().join("input.css").to_url(),
         );
       }
     }

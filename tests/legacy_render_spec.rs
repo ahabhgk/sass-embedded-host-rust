@@ -899,10 +899,10 @@ mod throws_a_legacy_exception {
           .build(),
       )
       .unwrap_err();
-    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+    assert_eq!(err.span().unwrap().start.line, 0);
     assert_eq!(
-      err.span().unwrap().url,
-      sandbox.path().join("test.scss").to_url().to_string(),
+      err.span().unwrap().url.as_ref().unwrap(),
+      &sandbox.path().join("test.scss").to_url(),
     );
   }
 
@@ -912,8 +912,8 @@ mod throws_a_legacy_exception {
     let err = sass
       .render(LegacyOptionsBuilder::default().data("a {b: }").build())
       .unwrap_err();
-    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
-    assert_eq!(err.span().unwrap().url, "");
+    assert_eq!(err.span().unwrap().start.line, 0);
+    assert!(err.span().unwrap().url.is_none());
   }
 
   #[test]
@@ -929,10 +929,10 @@ mod throws_a_legacy_exception {
           .build(),
       )
       .unwrap_err();
-    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+    assert_eq!(err.span().unwrap().start.line, 0);
     assert_eq!(
-      err.span().unwrap().url,
-      sandbox.path().join("test.scss").to_url().to_string(),
+      err.span().unwrap().url.as_ref().unwrap(),
+      &sandbox.path().join("test.scss").to_url(),
     );
   }
 
@@ -942,7 +942,7 @@ mod throws_a_legacy_exception {
     let err = sass
       .render(LegacyOptionsBuilder::default().data("a {b: 1 % a}").build())
       .unwrap_err();
-    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
-    assert_eq!(err.span().unwrap().url, "");
+    assert_eq!(err.span().unwrap().start.line, 0);
+    assert!(err.span().unwrap().url.is_none());
   }
 }

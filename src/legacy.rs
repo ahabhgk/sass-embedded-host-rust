@@ -13,8 +13,7 @@ use crate::{
 };
 
 impl Embedded {
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/modules#renderSync)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/modules#renderSync)
   pub fn render(&mut self, options: LegacyOptions) -> Result<LegacyResult> {
     let start = SystemTime::now();
     let entry = options

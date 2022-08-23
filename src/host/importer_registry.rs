@@ -5,6 +5,7 @@ use rustc_hash::FxHashMap;
 use crate::{
   api::{FileImporter, Importer, ImporterOptions, SassImporter},
   protocol::{
+    self,
     inbound_message::{
       canonicalize_response, compile_request, file_import_response,
       import_response::{self, ImportSuccess},
@@ -110,7 +111,7 @@ impl ImporterRegistry {
         result: if let Some(result) = result {
           Some(import_response::Result::Success(ImportSuccess {
             contents: result.contents,
-            syntax: result.syntax as i32,
+            syntax: protocol::Syntax::from(result.syntax) as i32,
             source_map_url: result
               .source_map_url
               .map(|url| url.to_string())

@@ -4,6 +4,8 @@ use std::{
   time::{Duration, SystemTime},
 };
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use urlencoding::decode;
 
 use crate::{
@@ -24,8 +26,8 @@ pub const PATH_DELIMITER: &str = ";";
 #[cfg(target_family = "unix")]
 pub const PATH_DELIMITER: &str = ":";
 
-/// More information:
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyFileOptions#indentType)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyFileOptions#indentType)
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum IndentType {
   /// Space IndentType.
@@ -40,8 +42,8 @@ impl Default for IndentType {
   }
 }
 
-/// More information:
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyFileOptions#linefeed)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyFileOptions#linefeed)
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum LineFeed {
   /// 'cr' uses U+000D CARRIAGE RETURN.
@@ -102,8 +104,7 @@ pub struct LegacyPluginThisOptions {
   pub result: LegacyPluginThisOptionsResult,
 }
 
-/// More information:
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyPluginThis)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyPluginThis)
 #[derive(Debug, Clone)]
 pub struct LegacyPluginThis {
   /// A partial representation of the options passed to [Sass::render].
@@ -146,19 +147,15 @@ impl LegacyPluginThis {
   }
 }
 
-/// More information:
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyImporterThis)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyImporterThis)
 pub struct LegacyImporterThis {
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyImporterThis#options)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyImporterThis#options)
   pub options: LegacyPluginThisOptions,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyImporterThis#fromImporter)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyImporterThis#fromImporter)
   pub from_import: bool,
 }
 
-/// More information:
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/modules#LegacyImporterResult)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/modules#LegacyImporterResult)
 pub enum LegacyImporterResult {
   /// An object with the key file whose value is a path on disk. This causes
   /// Sass to load that file as though it had been imported directly.
@@ -342,54 +339,41 @@ impl LegacyOptionsBuilder {
   }
 }
 
-/// More information:
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyImporterThis)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyImporterThis)
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug)]
 pub struct LegacyOptions {
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#includePaths)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#includePaths)
   pub include_paths: Vec<PathBuf>,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#indentType)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#indentType)
   pub indent_type: IndentType,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#indentWidth)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#indentWidth)
   pub indent_width: usize,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#linefeed)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#linefeed)
   pub linefeed: LineFeed,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#outputStyle)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#outputStyle)
   pub output_style: OutputStyle,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#sourceMap)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#sourceMap)
   pub source_map: bool,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#sourceMapContents)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#sourceMapContents)
   pub source_map_contents: bool,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#importer)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#importer)
+  #[serde(skip)]
   pub importers: Option<Vec<BoxedLegacyImporter>>,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#charset)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#charset)
   pub charset: bool,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#quietDeps)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#quietDeps)
   pub quiet_deps: bool,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#verbose)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#verbose)
   pub verbose: bool,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#logger)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#logger)
+  #[serde(skip)]
   pub logger: Option<BoxedLogger>,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyFileOptions#file)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyFileOptions#file)
   pub file: Option<PathBuf>,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyStringOptions#data)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyStringOptions#data)
   pub data: Option<String>,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyStringOptions#indentedSyntax)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyStringOptions#indentedSyntax)
   pub indented_syntax: Option<bool>,
 }
 
@@ -465,23 +449,20 @@ impl LegacyOptions {
   }
 }
 
-/// More information:
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyResult)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyResult)
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub struct LegacyResult {
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyResult#css)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyResult#css)
   pub css: Vec<u8>,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyResult#map)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyResult#map)
   pub map: Option<Vec<u8>>,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyResult#stats)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyResult#stats)
   pub stats: LegacyResultStats,
 }
 
-/// More information:
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyResult#stats)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyResult#stats)
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub struct LegacyResultStats {
   /// The absolute path of [LegacyOptions.file], or "data" if [LegacyOptions.file]

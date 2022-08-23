@@ -33,18 +33,16 @@ pub mod legacy;
 pub use api::{
   BoxedFileImporter, BoxedImporter, BoxedLogger, CompileResult, FileImporter,
   Importer, ImporterOptions, ImporterResult, Logger, LoggerDebugOptions,
-  LoggerWarnOptions, Options, OptionsBuilder, SassImporter, StringOptions,
-  StringOptionsBuilder,
+  LoggerWarnOptions, Options, OptionsBuilder, OutputStyle, SassImporter,
+  SourceSpan, StringOptions, StringOptionsBuilder, Syntax,
 };
 pub use embedded::{Embedded, Embedded as Sass};
 pub use error::{Exception, Result};
-pub use protocol::{OutputStyle, SourceSpan, Syntax};
 pub use url::{self, Url};
 
 /// A Logger that silently ignores all warnings and debug messages.
 ///
-/// More information:
-///  - [Sass documentation][https://sass-lang.com/documentation/js-api/modules/Logger#silent]
+/// More information: [Sass documentation][https://sass-lang.com/documentation/js-api/modules/Logger#silent]
 #[derive(Debug, Default, Clone)]
 pub struct Silent;
 
