@@ -66,6 +66,7 @@ jobs:
           toolchain: 'stable'
           profile: minimal
           override: true
+      - run: cargo build
       # Since cargo test will run tests in parallel, and the crate uses cwd in
       # legacy importer and captured stdio for testing logger, so we need to
       # run tests in sequentially by adding `--test-threads=1`

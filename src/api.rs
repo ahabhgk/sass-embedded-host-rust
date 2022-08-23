@@ -28,12 +28,12 @@ pub struct Options {
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#alertColor)
   pub alert_color: Option<bool>,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#importers)
-  #[serde(skip)]
+  #[cfg_attr(feature = "serde", serde(skip))]
   pub importers: Vec<SassImporter>,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#loadPaths)
   pub load_paths: Vec<PathBuf>,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#logger)
-  #[serde(skip)]
+  #[cfg_attr(feature = "serde", serde(skip))]
   pub logger: Option<BoxedLogger>,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#quietDeps)
   pub quiet_deps: bool,
@@ -193,7 +193,7 @@ pub struct StringOptions {
   /// Field for [Options]
   pub common: Options,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#importer)
-  #[serde(skip)]
+  #[cfg_attr(feature = "serde", serde(skip))]
   pub input_importer: Option<SassImporter>,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#syntax)
   ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#syntax)

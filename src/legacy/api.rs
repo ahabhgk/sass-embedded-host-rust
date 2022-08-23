@@ -358,7 +358,7 @@ pub struct LegacyOptions {
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#sourceMapContents)
   pub source_map_contents: bool,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#importer)
-  #[serde(skip)]
+  #[cfg_attr(feature = "serde", serde(skip))]
   pub importers: Option<Vec<BoxedLegacyImporter>>,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#charset)
   pub charset: bool,
@@ -367,7 +367,7 @@ pub struct LegacyOptions {
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#verbose)
   pub verbose: bool,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#logger)
-  #[serde(skip)]
+  #[cfg_attr(feature = "serde", serde(skip))]
   pub logger: Option<BoxedLogger>,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyFileOptions#file)
   pub file: Option<PathBuf>,
