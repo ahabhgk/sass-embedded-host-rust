@@ -202,10 +202,10 @@ mod with_at_debug {
         *self.count.lock() += 1;
         let span = options.span.as_ref().unwrap();
         assert_eq!(message, "heck");
-        assert_eq!(span.start.as_ref().unwrap().line, 0);
-        assert_eq!(span.start.as_ref().unwrap().column, 0);
-        assert_eq!(span.end.as_ref().unwrap().line, 0);
-        assert_eq!(span.end.as_ref().unwrap().column, 11);
+        assert_eq!(span.start.line, 0);
+        assert_eq!(span.start.column, 0);
+        assert_eq!(span.end.line, 0);
+        assert_eq!(span.end.column, 11);
       }
     }
 

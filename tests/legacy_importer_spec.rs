@@ -12,7 +12,7 @@ use sass_embedded::{
     IndentType, LegacyImporter, LegacyImporterResult, LegacyImporterThis,
     LegacyOptionsBuilder, LineFeed, PATH_DELIMITER,
   },
-  Exception, Result, Sass,
+  Exception, Result, Sass, Url,
 };
 
 #[test]
@@ -1796,7 +1796,7 @@ mod gracefully_handles_an_error_when {
           .build(),
       )
       .unwrap_err();
-    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+    assert_eq!(err.span().unwrap().start.line, 0);
   }
 
   #[test]
@@ -1824,7 +1824,7 @@ mod gracefully_handles_an_error_when {
           .build(),
       )
       .unwrap_err();
-    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+    assert_eq!(err.span().unwrap().start.line, 0);
   }
 
   #[test]
@@ -1852,7 +1852,7 @@ mod gracefully_handles_an_error_when {
           .build(),
       )
       .unwrap_err();
-    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+    assert_eq!(err.span().unwrap().start.line, 0);
   }
 
   #[test]
@@ -1880,7 +1880,10 @@ mod gracefully_handles_an_error_when {
           .build(),
       )
       .unwrap_err();
-    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
-    assert_eq!(err.span().unwrap().url, "foo:bar");
+    assert_eq!(err.span().unwrap().start.line, 0);
+    assert_eq!(
+      err.span().unwrap().url.as_ref().unwrap(),
+      &Url::parse("foo:bar").unwrap(),
+    );
   }
 }

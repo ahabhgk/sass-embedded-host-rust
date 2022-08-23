@@ -3,55 +3,49 @@ use std::{
   path::{Path, PathBuf},
 };
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 use crate::{
   protocol::{
+    self,
     outbound_message::{
       compile_response::{self, CompileSuccess},
       CompileResponse,
     },
-    OutputStyle, SourceSpan, Syntax,
   },
   Exception, Result, Url,
 };
 
 /// Options that can be passed to [Sass::compile].
 ///
-/// More information:
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options)
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug)]
 pub struct Options {
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#alertAscii)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#alertAscii)
   pub alert_ascii: bool,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#alertColor)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#alertColor)
   pub alert_color: Option<bool>,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#importers)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#importers)
+  #[serde(skip)]
   pub importers: Vec<SassImporter>,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#loadPaths)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#loadPaths)
   pub load_paths: Vec<PathBuf>,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#logger)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#logger)
+  #[serde(skip)]
   pub logger: Option<BoxedLogger>,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#quietDeps)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#quietDeps)
   pub quiet_deps: bool,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#sourceMap)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#sourceMap)
   pub source_map: bool,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#sourceMapIncludeSources)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#sourceMapIncludeSources)
   pub source_map_include_sources: bool,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#style)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#style)
   pub style: OutputStyle,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#verbose)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#verbose)
   pub verbose: bool,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#charset)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#charset)
   pub charset: bool,
 }
 
@@ -192,21 +186,19 @@ impl OptionsBuilder {
 
 /// Options that can be passed to [Sass::compile_string].
 ///
-/// More information:
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/modules#StringOptions)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/modules#StringOptions)
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Default)]
 pub struct StringOptions {
   /// Field for [Options]
   pub common: Options,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#importer)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#importer)
+  #[serde(skip)]
   pub input_importer: Option<SassImporter>,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#syntax)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#syntax)
   ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#syntax)
   pub syntax: Syntax,
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#url)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#url)
   ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#url)
   pub url: Option<Url>,
 }
@@ -373,17 +365,14 @@ impl StringOptionsBuilder {
 /// A type alias for [Box<dyn Logger>].
 pub type BoxedLogger = Box<dyn Logger>;
 
-/// More information
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger)
 pub trait Logger: Debug + Send + Sync {
-  /// More information
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger#warn)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger#warn)
   fn warn(&self, _message: &str, options: &LoggerWarnOptions) {
     eprintln!("{}", options.formatted);
   }
 
-  /// More information
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger#debug)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger#debug)
   fn debug(&self, _message: &str, options: &LoggerDebugOptions) {
     eprintln!("{}", options.formatted);
   }
@@ -391,8 +380,7 @@ pub trait Logger: Debug + Send + Sync {
 
 /// Options for [Logger::warn].
 ///
-/// More information
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger#warn)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger#warn)
 pub struct LoggerWarnOptions {
   /// Whether this is a deprecation warning.
   pub deprecation: bool,
@@ -405,8 +393,7 @@ pub struct LoggerWarnOptions {
 
 /// Options for [Logger::debug].
 ///
-/// More information
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger#debug)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger#debug)
 pub struct LoggerDebugOptions {
   /// The location in the Sass source code that generated this debug message.
   pub span: Option<SourceSpan>,
@@ -428,37 +415,31 @@ pub type BoxedImporter = Box<dyn Importer>;
 /// A type alias for [Box<dyn FileImporter>].
 pub type BoxedFileImporter = Box<dyn FileImporter>;
 
-/// More information
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer)
 pub trait Importer: Debug + Send + Sync {
-  /// More information
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer#canonicalize)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer#canonicalize)
   fn canonicalize(
     &self,
     url: &str,
     options: &ImporterOptions,
   ) -> Result<Option<Url>>;
 
-  /// More information
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer#load)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer#load)
   fn load(&self, canonical_url: &Url) -> Result<Option<ImporterResult>>;
 }
 
 /// Options for [Importer::canonicalize] or [Importer::load].
 ///
-/// More information
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer#canonicalize)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer#canonicalize)
 pub struct ImporterOptions {
   /// Whether this is being invoked because of a Sass @import rule, as opposed to a @use
   /// or @forward rule.
   pub from_import: bool,
 }
 
-/// More information
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/FileImporter)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/FileImporter)
 pub trait FileImporter: Debug + Send + Sync {
-  /// More information
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/FileImporter#findFileUrl)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/FileImporter#findFileUrl)
   fn find_file_url(
     &self,
     url: &str,
@@ -466,32 +447,25 @@ pub trait FileImporter: Debug + Send + Sync {
   ) -> Result<Option<Url>>;
 }
 
-/// More information
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/ImporterResult)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/ImporterResult)
 pub struct ImporterResult {
-  /// More information
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#contents)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#contents)
   pub contents: String,
-  /// More information
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#sourceMapUrl)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#sourceMapUrl)
   pub source_map_url: Option<Url>,
-  /// More information
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#syntax)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/ImporterResult#syntax)
   pub syntax: Syntax,
 }
 
-/// More information
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/CompileResult)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/CompileResult)
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub struct CompileResult {
-  /// More information
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/CompileResult#css)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/CompileResult#css)
   pub css: String,
-  /// More information
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/CompileResult#loadedUrls)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/CompileResult#loadedUrls)
   pub loaded_urls: Vec<Url>,
-  /// More information
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/CompileResult#sourceMap)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/CompileResult#sourceMap)
   pub source_map: Option<String>,
 }
 
@@ -523,6 +497,114 @@ impl From<CompileSuccess> for CompileResult {
       } else {
         Some(s.source_map)
       },
+    }
+  }
+}
+
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/modules#OutputStyle)
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug)]
+pub enum OutputStyle {
+  /// Writes each selector and declaration on its own line.
+  Expanded,
+  /// Removes as many extra characters as possible, and writes the entire stylesheet on a single line.
+  Compressed,
+}
+
+impl Default for OutputStyle {
+  fn default() -> Self {
+    Self::Expanded
+  }
+}
+
+impl From<OutputStyle> for protocol::OutputStyle {
+  fn from(o: OutputStyle) -> Self {
+    match o {
+      OutputStyle::Expanded => Self::Expanded,
+      OutputStyle::Compressed => Self::Compressed,
+    }
+  }
+}
+
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/modules#Syntax)
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug)]
+pub enum Syntax {
+  /// the [scss syntax](https://sass-lang.com/documentation/syntax#scss)
+  Scss,
+  /// the [indented syntax](https://sass-lang.com/documentation/syntax#the-indented-syntax)
+  Indented,
+  /// the plain css syntax, which is parsed like SCSS but forbids the use of any special Sass features.
+  Css,
+}
+
+impl Default for Syntax {
+  fn default() -> Self {
+    Self::Scss
+  }
+}
+
+impl From<Syntax> for protocol::Syntax {
+  fn from(s: Syntax) -> Self {
+    match s {
+      Syntax::Scss => Self::Scss,
+      Syntax::Indented => Self::Indented,
+      Syntax::Css => Self::Css,
+    }
+  }
+}
+
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/SourceSpan)
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug)]
+pub struct SourceSpan {
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/SourceSpan#context)
+  pub context: Option<String>,
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/SourceSpan#end)
+  pub end: SourceLocation,
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/SourceSpan#start)
+  pub start: SourceLocation,
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/SourceSpan#url)
+  pub url: Option<Url>,
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/SourceSpan#text)
+  pub text: String,
+}
+
+impl From<protocol::SourceSpan> for SourceSpan {
+  fn from(span: protocol::SourceSpan) -> Self {
+    let start = span.start.unwrap();
+    Self {
+      context: if span.context.is_empty() {
+        None
+      } else {
+        Some(span.context)
+      },
+      end: span.end.unwrap_or_else(|| start.clone()).into(),
+      start: start.into(),
+      url: if span.url.is_empty() {
+        None
+      } else {
+        Some(Url::parse(&span.url).unwrap())
+      },
+      text: span.text,
+    }
+  }
+}
+
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug)]
+pub struct SourceLocation {
+  pub offset: usize,
+  pub line: usize,
+  pub column: usize,
+}
+
+impl From<protocol::source_span::SourceLocation> for SourceLocation {
+  fn from(location: protocol::source_span::SourceLocation) -> Self {
+    Self {
+      offset: location.offset as usize,
+      line: location.line as usize,
+      column: location.column as usize,
     }
   }
 }

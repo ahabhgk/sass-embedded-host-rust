@@ -257,7 +257,7 @@ fn wraps_an_error_in_canonicalize() {
     )
     .unwrap_err();
   assert!(err.message().contains("this import is bad actually"));
-  assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+  assert_eq!(err.span().unwrap().start.line, 0);
 }
 
 #[test]
@@ -287,7 +287,7 @@ fn wraps_an_error_in_load() {
     )
     .unwrap_err();
   assert!(err.message().contains("this import is bad actually"));
-  assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+  assert_eq!(err.span().unwrap().start.line, 0);
 }
 
 #[test]
@@ -357,7 +357,7 @@ fn fails_to_import_when_load_returns_nil() {
         .build(),
     )
     .unwrap_err();
-  assert!(err.span().unwrap().start.as_ref().unwrap().line == 0);
+  assert!(err.span().unwrap().start.line == 0);
 }
 
 #[test]
@@ -613,7 +613,7 @@ mod with_syntax {
         StringOptionsBuilder::default().importer(MyImporter).build(),
       )
       .unwrap_err();
-    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+    assert_eq!(err.span().unwrap().start.line, 0);
   }
 }
 
@@ -1014,7 +1014,7 @@ mod file_importer {
     let err = sass
       .compile_string("@import \"other\";", StringOptions::default())
       .unwrap_err();
-    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+    assert_eq!(err.span().unwrap().start.line, 0);
   }
 
   #[test]
@@ -1041,7 +1041,7 @@ mod file_importer {
           .build(),
       )
       .unwrap_err();
-    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
+    assert_eq!(err.span().unwrap().start.line, 0);
   }
 
   #[test]
@@ -1171,8 +1171,8 @@ mod file_importer {
           .build(),
       )
       .unwrap_err();
-    assert_eq!(err.span().unwrap().start.as_ref().unwrap().line, 0);
-    assert_eq!(err.span().unwrap().url, url.to_string());
+    assert_eq!(err.span().unwrap().start.line, 0);
+    assert_eq!(err.span().unwrap().url.as_ref().unwrap(), &url);
   }
 
   #[test]

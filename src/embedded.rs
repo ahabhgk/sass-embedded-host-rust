@@ -6,9 +6,12 @@ use crate::{
   channel::Channel,
   host::ImporterRegistry,
   host::{Host, LoggerRegistry},
-  protocol::inbound_message::{
-    compile_request::{Input, StringInput},
-    CompileRequest,
+  protocol::{
+    self,
+    inbound_message::{
+      compile_request::{Input, StringInput},
+      CompileRequest,
+    },
   },
   CompileResult, Options, Result, StringOptions,
 };
@@ -45,8 +48,7 @@ impl Embedded {
   /// let res = sass.compile("../styles/a.scss", Options::default()).unwrap();
   /// ```
   ///
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/modules#compile)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/modules#compile)
   pub fn compile(
     &mut self,
     path: impl AsRef<Path>,
@@ -62,7 +64,7 @@ impl Embedded {
     }
 
     let request = CompileRequest {
-      style: options.style as i32,
+      style: protocol::OutputStyle::from(options.style) as i32,
       source_map: options.source_map,
       alert_color: options
         .alert_color
@@ -95,8 +97,7 @@ impl Embedded {
   /// let res = sass.compile_string("a {b: c}", StringOptions::default()).unwrap();
   /// ```
   ///
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/modules#compileString)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/modules#compileString)
   pub fn compile_string(
     &mut self,
     source: impl Into<String>,
@@ -145,7 +146,7 @@ impl Embedded {
     let url = options.url.map(|url| url.to_string()).unwrap_or_default();
 
     let request = CompileRequest {
-      style: options.common.style as i32,
+      style: protocol::OutputStyle::from(options.common.style) as i32,
       source_map: options.common.source_map,
       alert_color: options
         .common
@@ -160,7 +161,7 @@ impl Embedded {
       input: Some(Input::String(StringInput {
         source: source.into(),
         url,
-        syntax: options.syntax as i32,
+        syntax: protocol::Syntax::from(options.syntax) as i32,
         importer,
       })),
       // id: set in compile_request

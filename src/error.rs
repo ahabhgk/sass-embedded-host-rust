@@ -1,7 +1,10 @@
 use std::fmt;
 
-use crate::protocol::{
-  outbound_message::compile_response::CompileFailure, ProtocolError, SourceSpan,
+use crate::{
+  protocol::{
+    outbound_message::compile_response::CompileFailure, ProtocolError,
+  },
+  SourceSpan,
 };
 
 /// An alias for [std::result::Result<T, Exception>].
@@ -9,8 +12,7 @@ pub type Result<T> = std::result::Result<T, Exception>;
 
 /// An exception for this crate, thrown because a Sass compilation failed or `io::Error`.
 ///
-/// More information:
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/classes/Exception)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/classes/Exception)
 #[derive(Debug)]
 pub struct Exception {
   message: String,
@@ -21,26 +23,22 @@ pub struct Exception {
 }
 
 impl Exception {
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/classes/Exception#message)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/classes/Exception#message)
   pub fn message(&self) -> &str {
     &self.message
   }
 
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/classes/Exception#sassMessage)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/classes/Exception#sassMessage)
   pub fn sass_message(&self) -> Option<&str> {
     self.sass_message.as_deref()
   }
 
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/classes/Exception#sassStack)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/classes/Exception#sassStack)
   pub fn sass_stack(&self) -> Option<&str> {
     self.sass_stack.as_deref()
   }
 
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/classes/Exception#span)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/classes/Exception#span)
   pub fn span(&self) -> Option<&SourceSpan> {
     self.span.as_ref()
   }
@@ -49,8 +47,7 @@ impl Exception {
 impl std::error::Error for Exception {}
 
 impl fmt::Display for Exception {
-  /// More information:
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/classes/Exception#toString)
+  /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/classes/Exception#toString)
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.message)
   }
@@ -62,7 +59,7 @@ impl From<CompileFailure> for Exception {
       message: failure.formatted,
       sass_message: Some(failure.message),
       sass_stack: Some(failure.stack_trace),
-      span: failure.span,
+      span: failure.span.map(|span| span.into()),
       source: None,
     }
   }

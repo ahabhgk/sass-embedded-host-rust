@@ -21,8 +21,7 @@ use super::{LegacyImporterResult, LegacyImporterThis, LegacyPluginThis};
 pub(crate) const END_OF_LOAD_PROTOCOL: &str = "sass-embedded-legacy-load-done:";
 pub(crate) const LEGACY_IMPORTER_PROTOCOL: &str = "legacy-importer:";
 
-/// More information:
-///  - [Sass documentation](https://sass-lang.com/documentation/js-api/modules#LegacyImporter)
+/// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/modules#LegacyImporter)
 pub trait LegacyImporter: Debug + Sync + Send {
   /// implements of [LegacyImporter].
   fn call(
