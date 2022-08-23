@@ -196,10 +196,8 @@ pub struct StringOptions {
   #[cfg_attr(feature = "serde", serde(skip))]
   pub input_importer: Option<SassImporter>,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#syntax)
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#syntax)
   pub syntax: Syntax,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithoutImporter#url)
-  ///  - [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/StringOptionsWithImporter#url)
   pub url: Option<Url>,
 }
 
