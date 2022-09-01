@@ -16,6 +16,6 @@ updates:
       interval: "daily"
 
   - package-ecosystem: "npm"
-    directory: "/"
+    directory: "/ext/sass"
     schedule:
       interval: "daily"
