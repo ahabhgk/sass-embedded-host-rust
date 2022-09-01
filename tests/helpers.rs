@@ -13,7 +13,8 @@ fn version_smoke() {
   let mut sass = Sass::new(exe_path()).unwrap();
   let info = sass.info().unwrap();
   // !!! the crate's version should be the same as the embedded's version !!!
-  assert_eq!(info, "sass-embedded\t#1.54.4");
+  // once the crate stable...
+  assert_eq!(info, "sass-embedded\t#1.54.8");
 }
 
 #[cfg(target_family = "windows")]

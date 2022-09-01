@@ -7,8 +7,8 @@
   "devDependencies": {
     "extract-zip": "^2.0.1",
     "node-fetch": "^3.2.10",
-    "sass": "^1.54.4",
-    "sass-embedded": "^1.54.4",
+    "sass": "^1.54.8",
+    "sass-embedded": "^1.54.8",
     "tar": "^6.1.11"
   }
 }
