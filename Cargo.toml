@@ -1,6 +1,6 @@
 [package]
 name = "sass-embedded"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["ahabhgk <ahabhgk@gmail.com>"]
 edition = "2021"
 resolver = "2"
