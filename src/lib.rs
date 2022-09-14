@@ -31,7 +31,7 @@ mod varint;
 pub mod legacy;
 
 pub use api::{
-  BoxedFileImporter, BoxedImporter, BoxedLogger, CompileResult, FileImporter,
+  BoxFileImporter, BoxImporter, BoxLogger, CompileResult, FileImporter,
   Importer, ImporterOptions, ImporterResult, Logger, LoggerDebugOptions,
   LoggerWarnOptions, Options, OptionsBuilder, OutputStyle, SassImporter,
   SourceSpan, StringOptions, StringOptionsBuilder, Syntax,

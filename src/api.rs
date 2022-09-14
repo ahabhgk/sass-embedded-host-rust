@@ -34,7 +34,7 @@ pub struct Options {
   pub load_paths: Vec<PathBuf>,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#logger)
   #[cfg_attr(feature = "serde", serde(skip))]
-  pub logger: Option<BoxedLogger>,
+  pub logger: Option<BoxLogger>,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#quietDeps)
   pub quiet_deps: bool,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Options#sourceMap)
@@ -361,7 +361,7 @@ impl StringOptionsBuilder {
 }
 
 /// A type alias for [Box<dyn Logger>].
-pub type BoxedLogger = Box<dyn Logger>;
+pub type BoxLogger = Box<dyn Logger>;
 
 /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Logger)
 pub trait Logger: Debug + Send + Sync {
@@ -398,20 +398,20 @@ pub struct LoggerDebugOptions {
   pub(crate) formatted: String,
 }
 
-/// Enum wrapper for [BoxedImporter] and [BoxedFileImporter].
+/// Enum wrapper for [BoxImporter] and [BoxFileImporter].
 #[derive(Debug)]
 pub enum SassImporter {
-  /// A [BoxedImporter].
-  Importer(BoxedImporter),
-  /// A [BoxedFileImporter].
-  FileImporter(BoxedFileImporter),
+  /// A [BoxImporter].
+  Importer(BoxImporter),
+  /// A [BoxFileImporter].
+  FileImporter(BoxFileImporter),
 }
 
 /// A type alias for [Box<dyn Importer>].
-pub type BoxedImporter = Box<dyn Importer>;
+pub type BoxImporter = Box<dyn Importer>;
 
 /// A type alias for [Box<dyn FileImporter>].
-pub type BoxedFileImporter = Box<dyn FileImporter>;
+pub type BoxFileImporter = Box<dyn FileImporter>;
 
 /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/Importer)
 pub trait Importer: Debug + Send + Sync {
