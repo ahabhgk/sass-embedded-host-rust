@@ -12,10 +12,10 @@ use crate::{
   legacy::url_to_file_path_cross_platform, CompileResult, Options,
   StringOptions, Syntax, Url,
 };
-pub use crate::{BoxedLogger, Logger, OutputStyle};
+pub use crate::{BoxLogger, Logger, OutputStyle};
 
 use super::{
-  BoxedLegacyImporter, LegacyImporter, END_OF_LOAD_PROTOCOL,
+  BoxLegacyImporter, LegacyImporter, END_OF_LOAD_PROTOCOL,
   LEGACY_IMPORTER_PROTOCOL,
 };
 
@@ -265,14 +265,14 @@ impl LegacyOptionsBuilder {
   /// Sets the [LegacyOptions]'s [sass_importers] field with [SassLegacyImporter]s.
   pub fn sass_importers(
     mut self,
-    arg: impl IntoIterator<Item = impl Into<BoxedLegacyImporter>>,
+    arg: impl IntoIterator<Item = impl Into<BoxLegacyImporter>>,
   ) -> Self {
     self.options.importers = Some(arg.into_iter().map(|i| i.into()).collect());
     self
   }
 
   /// Adds a [SassLegacyImporter] to the [LegacyOptions]'s [sass_importers] field.
-  pub fn sass_importer(mut self, arg: impl Into<BoxedLegacyImporter>) -> Self {
+  pub fn sass_importer(mut self, arg: impl Into<BoxLegacyImporter>) -> Self {
     self.options.importers =
       Some(if let Some(mut importers) = self.options.importers {
         importers.push(arg.into());
@@ -359,7 +359,7 @@ pub struct LegacyOptions {
   pub source_map_contents: bool,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#importer)
   #[cfg_attr(feature = "serde", serde(skip))]
-  pub importers: Option<Vec<BoxedLegacyImporter>>,
+  pub importers: Option<Vec<BoxLegacyImporter>>,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#charset)
   pub charset: bool,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#quietDeps)
@@ -368,7 +368,7 @@ pub struct LegacyOptions {
   pub verbose: bool,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacySharedOptions#logger)
   #[cfg_attr(feature = "serde", serde(skip))]
-  pub logger: Option<BoxedLogger>,
+  pub logger: Option<BoxLogger>,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyFileOptions#file)
   pub file: Option<PathBuf>,
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyStringOptions#data)
