@@ -501,7 +501,7 @@ impl From<CompileSuccess> for CompileResult {
 
 /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/modules#OutputStyle)
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum OutputStyle {
   /// Writes each selector and declaration on its own line.
   Expanded,
@@ -526,7 +526,7 @@ impl From<OutputStyle> for protocol::OutputStyle {
 
 /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/modules#Syntax)
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Syntax {
   /// the [scss syntax](https://sass-lang.com/documentation/syntax#scss)
   Scss,
@@ -554,7 +554,7 @@ impl From<Syntax> for protocol::Syntax {
 
 /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/SourceSpan)
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SourceSpan {
   /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/SourceSpan#context)
   pub context: Option<String>,
@@ -590,7 +590,7 @@ impl From<protocol::SourceSpan> for SourceSpan {
 }
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SourceLocation {
   pub offset: usize,
   pub line: usize,

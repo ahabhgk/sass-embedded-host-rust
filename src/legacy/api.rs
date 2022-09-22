@@ -28,7 +28,7 @@ pub const PATH_DELIMITER: &str = ":";
 
 /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyFileOptions#indentType)
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum IndentType {
   /// Space IndentType.
   Space,
@@ -44,7 +44,7 @@ impl Default for IndentType {
 
 /// More information: [Sass documentation](https://sass-lang.com/documentation/js-api/interfaces/LegacyFileOptions#linefeed)
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LineFeed {
   /// 'cr' uses U+000D CARRIAGE RETURN.
   CR,
