@@ -440,7 +440,9 @@ impl From<LegacyOptions> for StringOptions {
 impl LegacyOptions {
   pub(crate) fn adjust_options(mut self) -> Self {
     if let Some(file) = &self.file {
-      if self.indented_syntax.is_some() || self.importers.is_some() {
+      if self.data.is_none()
+        && (self.indented_syntax.is_some() || self.importers.is_some())
+      {
         self.data = Some(fs::read_to_string(file).unwrap());
         self.indented_syntax = Some(self.indented_syntax.unwrap_or_default());
       }

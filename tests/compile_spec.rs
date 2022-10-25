@@ -500,6 +500,22 @@ mod compile_string {
         assert_eq!(err.span().unwrap().start.line, 0);
         assert_eq!(err.span().unwrap().url.as_ref().unwrap(), &url);
       }
+
+      #[test]
+      fn with_multi_span_errors() {
+        let sandbox = Sandbox::default();
+        let url = sandbox.path().join("foo.scss").to_url();
+
+        let mut sass = Sass::new(exe_path()).unwrap();
+        let err = sass
+          .compile_string(
+            "@use \"sass:math\"; @use \"sass:math\"",
+            StringOptionsBuilder::default().url(url.clone()).build(),
+          )
+          .unwrap_err();
+        assert_eq!(err.span().unwrap().start.line, 0);
+        assert_eq!(err.span().unwrap().url.as_ref().unwrap(), &url);
+      }
     }
   }
 }
