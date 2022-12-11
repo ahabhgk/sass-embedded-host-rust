@@ -468,14 +468,14 @@ pub struct CompileResult {
 }
 
 impl TryFrom<CompileResponse> for CompileResult {
-  type Error = Exception;
+  type Error = Box<Exception>;
 
   fn try_from(response: CompileResponse) -> Result<Self> {
     let res = response.result.unwrap();
     match res {
       compile_response::Result::Success(success) => Ok(success.into()),
       compile_response::Result::Failure(failure) => {
-        Err(Exception::from(failure))
+        Err(Exception::from(failure).into())
       }
     }
   }

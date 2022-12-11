@@ -8,7 +8,7 @@ use crate::{
 };
 
 /// An alias for [std::result::Result<T, Exception>].
-pub type Result<T> = std::result::Result<T, Exception>;
+pub type Result<T> = std::result::Result<T, Box<Exception>>;
 
 /// An exception for this crate, thrown because a Sass compilation failed or `io::Error`.
 ///

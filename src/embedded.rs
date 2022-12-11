@@ -83,7 +83,9 @@ impl Embedded {
 
     let host = Host::new(importer_registry, logger_registry);
     let conn = self.channel.connect(host)?;
-    let response = conn.compile_request(request)?;
+    let response = conn
+      .compile_request(request)
+      .map_err(|e| Box::new(e.into()))?;
     CompileResult::try_from(response)
   }
 
@@ -171,7 +173,9 @@ impl Embedded {
 
     let host = Host::new(importer_registry, logger_registry);
     let conn = self.channel.connect(host)?;
-    let response = conn.compile_request(request)?;
+    let response = conn
+      .compile_request(request)
+      .map_err(|e| Box::new(e.into()))?;
     CompileResult::try_from(response)
   }
 
@@ -181,7 +185,7 @@ impl Embedded {
     let importer_registry = ImporterRegistry::default();
     let host = Host::new(importer_registry, logger_registry);
     let conn = self.channel.connect(host)?;
-    let response = conn.version_request()?;
+    let response = conn.version_request().map_err(|e| Box::new(e.into()))?;
     Ok(format!(
       "sass-embedded\t#{}",
       response.implementation_version

@@ -241,7 +241,7 @@ fn wraps_an_error_in_canonicalize() {
       _: &str,
       _: &ImporterOptions,
     ) -> Result<Option<Url>> {
-      Err(Exception::new("this import is bad actually"))
+      Err(Exception::new("this import is bad actually").into())
     }
 
     fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
@@ -275,7 +275,7 @@ fn wraps_an_error_in_load() {
     }
 
     fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
-      Err(Exception::new("this import is bad actually"))
+      Err(Exception::new("this import is bad actually").into())
     }
   }
 
@@ -305,7 +305,7 @@ fn avoids_importer_when_canonicalize_returns_nil() {
     }
 
     fn load(&self, _: &Url) -> Result<Option<ImporterResult>> {
-      Err(Exception::new("this import is bad actually"))
+      Err(Exception::new("this import is bad actually").into())
     }
   }
 
@@ -1006,7 +1006,7 @@ mod file_importer {
         _: &str,
         _: &ImporterOptions,
       ) -> Result<Option<Url>> {
-        Err(Exception::new("this import is bad actually"))
+        Err(Exception::new("this import is bad actually").into())
       }
     }
 
