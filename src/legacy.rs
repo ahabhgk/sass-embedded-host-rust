@@ -70,9 +70,10 @@ impl Embedded {
       options.importers = importers;
       self.compile(file, options)
     } else {
-      Err(Exception::new(
-        "Either options.data or options.file must be set.",
-      ))
+      Err(
+        Exception::new("Either options.data or options.file must be set.")
+          .into(),
+      )
     }?;
     Ok(LegacyResult::new(
       if entry == "stdin" {

@@ -1811,7 +1811,7 @@ mod gracefully_handles_an_error_when {
         _: &str,
         _: &str,
       ) -> Result<Option<LegacyImporterResult>> {
-        Err(Exception::new("oh no"))
+        Err(Exception::new("oh no").into())
       }
     }
 

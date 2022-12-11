@@ -322,14 +322,17 @@ fn exactly_one(paths: Vec<PathBuf>) -> Result<Option<PathBuf>> {
   } else if paths.len() == 1 {
     Ok(Some(paths[0].clone()))
   } else {
-    Err(Exception::new(format!(
-      "It's not clear which file to import. Found:\n{}",
-      paths
-        .iter()
-        .map(|p| format!("  {}", p.to_string_lossy()))
-        .collect::<Vec<String>>()
-        .join("\n")
-    )))
+    Err(
+      Exception::new(format!(
+        "It's not clear which file to import. Found:\n{}",
+        paths
+          .iter()
+          .map(|p| format!("  {}", p.to_string_lossy()))
+          .collect::<Vec<String>>()
+          .join("\n")
+      ))
+      .into(),
+    )
   }
 }
 
