@@ -10,7 +10,6 @@ keywords = ["sass", "dart-sass", "sass-embedded", "scss"]
 repository = "https://github.com/ahabhgk/sass-embedded-host-rust"
 documentation = "https://docs.rs/sass-embedded-host-rust"
 readme = "README.md"
-include = ["**/*.rs", "ext/sass/sass-embedded.proto"]
 
 [features]
 default = []
@@ -36,9 +35,6 @@ tempfile = "3"
 gag = "1"
 pathdiff = "0.2"
 criterion = "0.4"
-
-[build-dependencies]
-prost-build = "0.11"
 
 [[bench]]
 name = "bootstrap"
