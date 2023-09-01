@@ -17,7 +17,7 @@ legacy = ["dep:regex", "dep:serde_json", "dep:urlencoding"]
 serde = ["dep:serde", "url/serde"]
 
 [dependencies]
-prost = "0.11"
+prost = "0.12"
 url = "2"
 atty = "0.2"
 parking_lot = "0.12"
